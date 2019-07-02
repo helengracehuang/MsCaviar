@@ -23,6 +23,39 @@ def read_z(read_fn):
         SNP.append(array)
     return SNP
 
+#outputs 4 files
+def output(causal_vec, SNP, prob_in_causal,causal_post):
+	#print the causal set
+    f = open("result_set.txt",'w')
+    for i in range(len(causal_vec)):
+        f.write(causal_vec[i] + "\n")
+    f.close()
+
+    #print each SNP and their posterior probs
+    u = open("result_post.txt",'w')
+    title1 = "SNP_ID"
+    u.write(title1.ljust(20))
+    title2 = "Prob_in_pCausalSet"
+    u.write(title2.ljust(20))
+    title3 = "Causal_Post._Prob"
+    u.write(title3.ljust(20))
+    u.write("\n")
+
+    for i in range(len(SNP)):
+        u.write(SNP[i].ljust(20))
+        u.write(prob_in_causal[i].ljust(20))
+        u.write(causal_post[i].ljust(20))
+        u.write("\n")
+    u.close()
+
+    #histogram file
+    s = open("result_hist.txt",'w')
+    s.close()
+
+    #log file
+    v = open("result_log.txt",'w')
+    v.close()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='CAVIAR is a statistical framework that quantifies the probability of each variant '
     	'to be causal while allowing with arbitrary number of causal variants.')
@@ -59,3 +92,18 @@ if __name__ == "__main__":
     print("max causal:", MAX_causal)
     print(M_SIGMA)
     print(S_VECTOR)
+    
+    
+    causal_vec = ["1","2","3"]
+    read_fn = "test.txt"
+    f = open(read_fn,'r')
+    SNP = []
+    prob = []
+    causal = []
+    for line in f:
+        line = line.strip()
+        array = line.split()
+        SNP.append(array[0])
+        prob.append(array[1])
+        causal.append(array[2])
+    output(causal_vec,SNP,prob,causal)
