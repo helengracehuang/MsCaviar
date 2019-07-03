@@ -16,23 +16,26 @@ def read_LD(read_fn):
 #returns 2*n list of [SNP name, association statistics]
 def read_z(read_fn):
     f = open(read_fn, 'r')
-    SNP = []
+    SNP_NAME = []
+    S_VECTOR = []
+
     for line in f:
         line = line.strip()
         array = line.split()
-        SNP.append(array)
-    return SNP
+        SNP_NAME.append(array[0])
+        S_VECTOR.append(array[1])
+    return SNP_NAME, S_VECTOR
 
 #outputs 4 files
-def output(causal_vec, SNP, prob_in_causal,causal_post):
+def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
 	#print the causal set
-    f = open("result_set.txt",'w')
+    f = open(output_file + "_set",'w')
     for i in range(len(causal_vec)):
         f.write(causal_vec[i] + "\n")
     f.close()
 
     #print each SNP and their posterior probs
-    u = open("result_post.txt",'w')
+    u = open(output_file + "post",'w')
     title1 = "SNP_ID"
     u.write(title1.ljust(20))
     title2 = "Prob_in_pCausalSet"
@@ -49,11 +52,11 @@ def output(causal_vec, SNP, prob_in_causal,causal_post):
     u.close()
 
     #histogram file
-    s = open("result_hist.txt",'w')
+    s = open(output_file + "hist",'w')
     s.close()
 
     #log file
-    v = open("result_log.txt",'w')
+    v = open(output_file + "log",'w')
     v.close()
 
 if __name__ == "__main__":
@@ -76,7 +79,7 @@ if __name__ == "__main__":
     Z_fn = args.zscore_file
 
     M_SIGMA = read_LD(LD_fn)
-    S_VECTOR = read_z(Z_fn)
+    SNP_NAME, S_VECTOR = read_z(Z_fn)
 
     if args.pho_probability:
         rho_prob = args.pho_probability
@@ -88,12 +91,7 @@ if __name__ == "__main__":
     else:
         MAX_causal = 2
 
-    print("rho:", rho_prob)
-    print("max causal:", MAX_causal)
-    print(M_SIGMA)
-    print(S_VECTOR)
-    
-    
+
     causal_vec = ["1","2","3"]
     read_fn = "test.txt"
     f = open(read_fn,'r')
@@ -107,3 +105,11 @@ if __name__ == "__main__":
         prob.append(array[1])
         causal.append(array[2])
     output(causal_vec,SNP,prob,causal)
+
+    #S_Vector has name and z-score
+    '''double NCP = 5.2
+    double gamma = 0.01
+    CaviarModel caviar(M_SIGMA, S_VECTOR, MAX_causal, NCP, rho_prob, gamma)
+    caviar.run()
+    caviar.print()'''
+    #output(O_fn, causal_vec, SNP, prob_in_causal, causal_post)
