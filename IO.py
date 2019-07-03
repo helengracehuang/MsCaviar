@@ -28,7 +28,7 @@ def read_z(read_fn):
 
 #outputs 4 files
 def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
-	#print the causal set
+    #print the causal set
     f = open(output_file + "_set",'w')
     for i in range(len(causal_vec)):
         f.write(causal_vec[i] + "\n")
@@ -61,7 +61,7 @@ def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='CAVIAR is a statistical framework that quantifies the probability of each variant '
-    	'to be causal while allowing with arbitrary number of causal variants.')
+        'to be causal while allowing with arbitrary number of causal variants.')
     parser.add_argument('-o', '--out', required=True, dest='output_file',
                         help='output file name')
     parser.add_argument('-l', '--ld_file', required=True, dest='ld_file',
@@ -113,3 +113,11 @@ if __name__ == "__main__":
     caviar.run()
     caviar.print()'''
     #output(O_fn, causal_vec, SNP, prob_in_causal, causal_post)
+
+
+
+
+
+
+
+
