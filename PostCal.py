@@ -1,6 +1,9 @@
 import sys
 import numpy as np
 import numpy.linalg as linalg
+from math import log, sqrt, exp
+from numpy.linalg import inv, det
+from scipy.special import comb
 
 
 class PostCal():
@@ -36,6 +39,19 @@ class PostCal():
         sigmaDet = linalg.det(sigmaMatrix)
 
     #Not finished
+    # addition in log space
+    def addlogSpace(a, b):
+        if a == 0:
+            return b
+        if b == 0:
+            return a
+        base = max(a,b)
+        if base - min(a,b) > 700:
+            return base
+        return base + log(1+exp(min(a,b)-base))
+    
+    
+
     def printGSLPrint( A, row, col):
         for i in range(row):
             for j in range(column):
@@ -44,12 +60,92 @@ class PostCal():
 
     def computeALLCausalSetConfiguration(stat, NCP, pcausalSet, outputFileName);
     def dmvnorm(Z, mean, R);
-    def fracdmvnorm( Z,  mean,  R,  diagC,  NCP);
+    
+    # C ~ N(0, R)
+    # S ~ N(0, R + R * diagC * R)
+    # auxiliary function for fastLikelihood
+    # dmvnorm is the pdf of multivariate normal distribution
+    # dmvnorm(Z, mean=rep(0,nrow(R)), R + R %*% R) / dmvnorm(Z, mean=rep(0, nrow(R)), R))
+    def fracdmvnorm(Z, mean, R, diagC, NCP):
+        newR = R + R * diagC * R
+        ZcenterMean = Z - mean
+        res1 = ZcenterMean.transpose() * inv(R) * ZcenterMean
+        res2 = ZcenterMean.transpose() * inv(newR) * ZcenterMean
+        v1 = res1[0][0]/2 - res2[0][0]/2
+
+        return v1 - log(sqrt(det(newR))) + log(sqrt(det(R)))
+        # log likelihood function of mvn
+        # '/' becomes '-' after taking log
+        # the -ln(2pi)/2 term is cancelled out in the substraction
+    
     def fracdmvnorm2( Z,  mean,  R,  diagC,  NCP);
-    def fastLikelihood(configure, stat, NCP);
+    
+    # compute the log likelihood of a single configuration
+    def fastLikelihood(configure, stat, NCP):
+        causalCount = 0 # total number of causal snps in current configuration
+        causalIndex = [] # list of indices of causal snps in current configuration
+        for i in range(snpCount):
+            causalCount += configure[i]
+            if configure[i] == 1:
+                causalIndex.append(i)
+
+        if causalCount == 0:
+            maxVal = 0
+            for i in range(snpCount):
+                if maxVal < abs(stat[i]): # absolute val of z-scores
+                    maxVal = stat[i]
+
+        Rcc = np.zeros((causalCount, causalCount)) # LD of causal SNPs
+        Zcc = np.zeros((causalCount, 1)) # z-score of causal SNPs
+        mean = np.zeros((causalCount, 1)) # population mean is all 0
+        diagC = np.zeros((causalCount, causalCount))
+
+        # construct the matrices & vectors
+        for i in range(causalCount):
+            for j in range(causalCount):
+                Rcc[i][j] = sigmaMatrix[causalIndex[i]][causalIndex[j]]
+            Zcc[i][0] = stat[causalIndex[i]]
+            diagC[i][i] = NCP
+            # sqrt(n) is absorbed into diagC
+
+        return fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
+    
     def likelihood(configure, stat, NCP) ;
     def nextBinary(data, size) ;
-    def computeTotalLikelihood( stat, NCP) ;    
+    
+    # compute the total likelihood of all configurations
+    def computeTotalLikelihood(stat, NCP):
+        num = 0
+        sumLikelihood = float(0)
+        tmp_Likelihood = float(0)
+        total_iteration = 0
+        configure = [None] * snpCount
+
+        # total num of configurations = ∑(i=1, maxCausalSNP)  2^i * nCr(snpCount, i)
+        for i in range(maxCausalSNP+1):
+            total_iteration = total_iteration + comb(snpCount, i)
+
+        print("Max Causal =", maxCausalSNP)
+
+        for i in range(snpCount):
+            configure[i] = 0
+        for i in range(total_iteration):
+            tmp_likelihood = fastLikelihood(configure, stat, NCP) + num * log(gamma) + (snpCount-num) * log(1-gamma)	
+            sumLikelihood = addlogSpace(sumLikelihood, tmp_likelihood)
+            for j in range(snpCount):
+                postValues[j] = addlogSpace(postValues[j], tmp_likelihood * configure[j])
+            histValues[num] = addlogSpace(histValues[num], tmp_likelihood)
+
+            num = nextBinary(configure, snpCount)
+            if i % 1000 == 0:
+                print("\r                                                                 \r"
+                    + float(i) / float(total_iteration) * 100 + "%")
+
+        for i in range(maxCausalSNP):
+            histValues[i] = exp(histValues[i]-sumLikelihood)
+
+        return sumLikelihood
+    
 
     def convertConfig2String(config, size):
         result = "0"
@@ -62,21 +158,44 @@ class PostCal():
         exportVector2File(fileName, histValues, maxCausalSNP+1);
     }
 
-    #double * stat, double NCP, char * pcausalSet, int *rank (array of int),  double inputRho, string outputFileName
-def findOptimalSetGreedy(stats, NCP, pcausalSet, rank?, inputRho, outputFile):
-    index = 0
-    rho = 0
-    total_post = 0
+    
+    # find optimal set using greedy algorithm
+    def findOptimalSetGreedy(stat, NCP, pcausalSet, rank, inputRho, outputFileName):
+        index = 0
+        rho = float(0)
+        total_post = float(0)
 
-    #write find_total_likelihood
+        totalLikeLihoodLOG = computeTotalLikelihood(stat, NCP)
 
-    total_likelihood = find_total_likelihood(stat, NCP)
+        # Output the total likelihood to the log file
+        export2File(outputFileName+"_log.txt", exp(totalLikeLihoodLOG))
 
-    #export file
-    item = []
-    for i in range(snpCount):
-        item.append(postValues[i]-total_post)
+        for i in range(snpCount):
+            total_post = addlogSpace(total_post, postValues[i])
+        print("Total Likelihood= %e SNP=%d \n", total_post, snpCount)
 
+        # Ouput the posterior to files
+        items = []
+        for i in range(snpCount):
+            items.append(data(exp(postValues[i]-total_post), i, 0))
+
+        print("\n")
+        sort items by number
+        for i in range(snpCount):
+            pcausalSet[i] = '0'
+
+        while True:
+            rho += exp(postValues[rank[index]]-total_post)
+            pcausalSet[rank[index]] = '1'
+            print("%d %e\n", rank[index], rho)
+            index += 1
+
+            if rho >= inputRho:
+                break
+
+        print("\n")
+
+        return 0
 
 
 
