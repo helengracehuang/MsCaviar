@@ -38,7 +38,6 @@ class PostCal():
                 sigmaMatrix[i][j] = M_SIGMA[i][j]
         sigmaDet = linalg.det(sigmaMatrix)
 
-    #Not finished
     # addition in log space
     def addlogSpace(a, b):
         if a == 0:
@@ -49,8 +48,6 @@ class PostCal():
         if base - min(a,b) > 700:
             return base
         return base + log(1+exp(min(a,b)-base))
-    
-    
 
     def printGSLPrint( A, row, col):
         for i in range(row):
@@ -58,8 +55,8 @@ class PostCal():
 
     def validConfigutation(configure, pcausalSet):
 
-    def computeALLCausalSetConfiguration(stat, NCP, pcausalSet, outputFileName);
-    def dmvnorm(Z, mean, R);
+#     def computeALLCausalSetConfiguration(stat, NCP, pcausalSet, outputFileName)
+#     def dmvnorm(Z, mean, R)
     
     # C ~ N(0, R)
     # S ~ N(0, R + R * diagC * R)
@@ -78,7 +75,7 @@ class PostCal():
         # '/' becomes '-' after taking log
         # the -ln(2pi)/2 term is cancelled out in the substraction
     
-    def fracdmvnorm2( Z,  mean,  R,  diagC,  NCP);
+#     def fracdmvnorm2( Z,  mean,  R,  diagC,  NCP)
     
     # compute the log likelihood of a single configuration
     def fastLikelihood(configure, stat, NCP):
@@ -110,7 +107,7 @@ class PostCal():
 
         return fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     
-    def likelihood(configure, stat, NCP) ;
+#     def likelihood(configure, stat, NCP)
     def nextBinary(data, size) ;
     
     # compute the total likelihood of all configurations
