@@ -1,17 +1,28 @@
 import numpy as np 
 import sys
 
+class data():
+    def data(self, num, ind1, ind2):
+        self.number = num
+        self.ind1 = ind1
+        self.ind2 = ind2
+
+    class by_numer():
+        def _call_(self, left, right):
+            return abs(left.number) > abs(right.number)
+
+
 #make sigma positive semi definite
 def makePositiveSemiDefinite(sigma,size):
     matDet = 0
     temp = 0
     addDiag = 0
-    positive = false
+    positive = 0
 
-    tempResultMat = [size][size]
-    permutation = [size]
+    tempResultMat = np.zeros((size,size))
+    permutation = [None]*size
 
-    while(!positive):
+    while(positive == 0):
         for i in range(size):
             for j in range(size):
                 if i == j:
@@ -20,7 +31,7 @@ def makePositiveSemiDefinite(sigma,size):
                     tempResultMat[i][j] = sigma[i][j]
 
         positive = np.all(np.linalg.eigvals(tempResultMat) > 0)
-        if(positive == false):
+        if(positive == 0):
             addDiag += 0.01
 
     for i in range(size):
