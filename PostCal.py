@@ -32,14 +32,14 @@ class PostCal():
             statMatrix[i][0] = S_VECTOR[i]
             statMatrixtTran[0][i] = S_VECTOR[i]
 
-        sigmaMatrix = np.zeroes((snpCount,snpCount))
+        sigmaMatrix = np.zeros((snpCount,snpCount))
         for i in range(snpCount):
             for j in range(snpCount):
                 sigmaMatrix[i][j] = M_SIGMA[i][j]
         sigmaDet = det(sigmaMatrix)
 
     # addition in log space
-    def addlogSpace(a, b):
+    def addlogSpace(self,a, b):
         if a == 0:
             return b
         if b == 0:
@@ -54,7 +54,7 @@ class PostCal():
     # auxiliary function for fastLikelihood
     # dmvnorm is the pdf of multivariate normal distribution
     # dmvnorm(Z, mean=rep(0,nrow(R)), R + R %*% R) / dmvnorm(Z, mean=rep(0, nrow(R)), R))
-    def fracdmvnorm(Z, mean, R, diagC, NCP):
+    def fracdmvnorm(self,Z, mean, R, diagC, NCP):
         newR = R + R * diagC * R
         ZcenterMean = Z - mean
         res1 = ZcenterMean.transpose() * inv(R) * ZcenterMean
@@ -67,7 +67,7 @@ class PostCal():
         # the -ln(2pi)/2 term is cancelled out in the substraction
     
     # compute the log likelihood of a single configuration
-    def fastLikelihood(configure, stat, NCP):
+    def fastLikelihood(self,configure, stat, NCP):
         causalCount = 0 # total number of causal snps in current configuration
         causalIndex = [] # list of indices of causal snps in current configuration
         for i in range(snpCount):
@@ -96,7 +96,7 @@ class PostCal():
 
         return fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     
-    def nextBinary(data, size):
+    def nextBinary(self,data, size):
         i = 0
         total_one = 0
         index = size-1
@@ -142,7 +142,7 @@ class PostCal():
         return total_one
    
     # compute the total likelihood of all configurations
-    def computeTotalLikelihood(stat, NCP):
+    def computeTotalLikelihood(stat,NCP):
         num = 0
         sumLikelihood = float(0)
         tmp_Likelihood = float(0)
@@ -174,14 +174,14 @@ class PostCal():
         return sumLikelihood
     
 
-    def convertConfig2String(config, size):
+    def convertConfig2String(self,config, size):
         result = "0"
         for i in range(size):
             if(config[i] == 1):
                 result = result + "_" + i
         return result
 
-    def printHist2File(fileName):
+    def printHist2File(self,fileName):
         f = open(fileName, 'w')
         rang = maxCausalSNP + 1
         for i in range(rang):
@@ -191,7 +191,7 @@ class PostCal():
 
     
     # find optimal set using greedy algorithm
-    def findOptimalSetGreedy(stat, NCP, pcausalSet, rank, inputRho, outputFileName):
+    def findOptimalSetGreedy(self,stat, NCP, pcausalSet, rank, inputRho, outputFileName):
         index = 0
         rho = float(0)
         total_post = float(0)
@@ -199,7 +199,9 @@ class PostCal():
         totalLikeLihoodLOG = computeTotalLikelihood(stat, NCP)
 
         # Output the total likelihood to the log file
-        export2File(outputFileName+"_log.txt", exp(totalLikeLihoodLOG))
+        f = open(outputFileName+"log", 'w')
+        f.write(exp(totalLikeLihoodLOG))
+        f.close()
 
         for i in range(snpCount):
             total_post = addlogSpace(total_post, postValues[i])

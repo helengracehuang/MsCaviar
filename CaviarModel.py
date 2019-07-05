@@ -1,7 +1,7 @@
 import sys
 import numpy as np
-import PostCal
-import Util
+from PostCal import PostCal
+from Util import makePositiveSemiDefinite
 
 class CaviarModel():
     def __init__(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma):
@@ -15,20 +15,19 @@ class CaviarModel():
         self.gamma = gamma
         self.O_fn = O_fn
 
-        self.snpCount = len(S_VECTOR)
+        #self.snpCount = len(S_VECTOR)
+        snpCount = len(S_VECTOR)
         self.pcausalSet = [None] * snpCount
         self.rank = [None] * snpCount
         makePositiveSemiDefinite(M_SIGMA,snpCount)
         for i in range(snpCount):
-            if(abs(S_VECTOR[i]) > NCP):
-                NCP = abs(S_VECTOR[i])
+            if(abs(float(S_VECTOR[i]) > NCP)):
+                NCP = abs(float(S_VECTOR[i]))
 
-        post = PostCal(M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma)
-
-
+        self.post = PostCal(M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma)
 
     def run(self):
-        post.findOptiomalSetGreedy(S_VECTOR, NCP, pcausalSet, rank, rho_prob, O_fn)
+        (self.post).findOptimalSetGreedy(self.S_VECTOR, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
 
     def finishUp(self):
         #print the causal set

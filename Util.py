@@ -25,17 +25,18 @@ def makePositiveSemiDefinite(sigma,size):
     while(positive == 0):
         for i in range(size):
             for j in range(size):
+                temp = float(sigma[i][j])
                 if i == j:
-                    tempResultMat[i][j] = sigma[i][j] + addDiag
+                    tempResultMat[i][j] = temp + addDiag
                 else:
-                    tempResultMat[i][j] = sigma[i][j]
+                    tempResultMat[i][j] = temp
 
         positive = np.all(np.linalg.eigvals(tempResultMat) > 0)
         if(positive == 0):
             addDiag += 0.01
 
     for i in range(size):
-            sigma[i][i] = sigma[i][i] + addDiag
+            sigma[i][i] = int(sigma[i][i]) + addDiag
 
 #factorial
 def fact(n):
@@ -59,38 +60,7 @@ def nCr(n,r):
         result = result * i
     return result/fact(r)
 
-#not done
-#not done
-#not done
-#not done
-def printVector(char * data, int size) 
-        for(int i = 0; i < size; i++)
-                printf("%c_", data[i]);
-def printVector(int * data, int size)
-        for(int i = 0; i < size; i++)
-                printf("%d_", (int)data[i]);
-def printVector(double * data, int size)
-        for(int i = 0; i < size; i++)
-                printf("%lf_", data[i]);
-#not done
-#not done
-#not done
-#not done
-#not done
-#not done
-#not done
-#not done
-def setIdentityMatrix(G, snpCount, geneCount):
-    for i in range(snpCount):
-        for j in range(geneCount):
-            G[i][j] = 0
-        G[i][i/(snpCount/geneCount)] = 1
 
-    for i in range(snpCount):
-        for j in range(geneCount):
-#not done
-#not done
-#not done
 
 def diffVector(data1, data2, size, result):
     for i in range(size):
