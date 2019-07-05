@@ -15,7 +15,7 @@ class PostCal():
     #maxCausalSNP: maximum number of causal variants to consider in a locus
     #totalLikeLihoodLOG:Compute the total log likelihood of all causal status (by likelihood we use prior)
 
-    def _init_(self, M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma):
+    def __init__(self, M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma):
         self.M_SIGMA = M_SIGMA
         self.S_VECTOR = S_VECTOR
         self.snpCount = snpCount
@@ -49,15 +49,6 @@ class PostCal():
             return base
         return base + log(1+exp(min(a,b)-base))
 
-    def printGSLPrint( A, row, col):
-        for i in range(row):
-            for j in range(column):
-
-    def validConfigutation(configure, pcausalSet):
-
-#     def computeALLCausalSetConfiguration(stat, NCP, pcausalSet, outputFileName)
-#     def dmvnorm(Z, mean, R)
-    
     # C ~ N(0, R)
     # S ~ N(0, R + R * diagC * R)
     # auxiliary function for fastLikelihood
@@ -74,8 +65,6 @@ class PostCal():
         # log likelihood function of mvn
         # '/' becomes '-' after taking log
         # the -ln(2pi)/2 term is cancelled out in the substraction
-    
-#     def fracdmvnorm2( Z,  mean,  R,  diagC,  NCP)
     
     # compute the log likelihood of a single configuration
     def fastLikelihood(configure, stat, NCP):
@@ -106,8 +95,6 @@ class PostCal():
             # sqrt(n) is absorbed into diagC
 
         return fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
-    
-#     def likelihood(configure, stat, NCP)
     
     def nextBinary(data, size):
         i = 0
@@ -153,9 +140,7 @@ class PostCal():
                 total_one += 1
 
         return total_one
-    # end nextBinary()
-    
-    
+   
     # compute the total likelihood of all configurations
     def computeTotalLikelihood(stat, NCP):
         num = 0
@@ -164,7 +149,6 @@ class PostCal():
         total_iteration = 0
         configure = [None] * snpCount
 
-        # total num of configurations = ∑(i=1, maxCausalSNP)  2^i * nCr(snpCount, i)
         for i in range(maxCausalSNP+1):
             total_iteration = total_iteration + comb(snpCount, i)
 
@@ -199,7 +183,8 @@ class PostCal():
 
     def printHist2File(fileName):
         f = open(fileName, 'w')
-        for i in range of maxCausalSNP + 1:
+        rang = maxCausalSNP + 1
+        for i in range(rang):
         	f.write(histValues[i] + " ")
         f.close()
 
