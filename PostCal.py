@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-import numpy.linalg as linalg
 from math import log, sqrt, exp
 from numpy.linalg import inv, det
 from scipy.special import comb
@@ -36,7 +35,7 @@ class PostCal():
         for i in range(snpCount):
             for j in range(snpCount):
                 sigmaMatrix[i][j] = M_SIGMA[i][j]
-        sigmaDet = linalg.det(sigmaMatrix)
+        sigmaDet = det(sigmaMatrix)
 
     # addition in log space
     def addlogSpace(a, b):
