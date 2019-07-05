@@ -52,8 +52,7 @@ class PostCal():
         for i in range(row):
             for j in range(column):
 
-    def validConfigutation(configure, pcausalSet):
-
+#     def validConfigutation(configure, pcausalSet)
 #     def computeALLCausalSetConfiguration(stat, NCP, pcausalSet, outputFileName)
 #     def dmvnorm(Z, mean, R)
     
