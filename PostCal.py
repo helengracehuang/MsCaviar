@@ -3,6 +3,7 @@ import numpy as np
 from math import log, sqrt, exp
 from numpy.linalg import inv, det
 from scipy.special import comb
+import Util
 
 
 class PostCal():
@@ -52,7 +53,8 @@ class PostCal():
         for i in range(row):
             for j in range(column):
 
-#     def validConfigutation(configure, pcausalSet)
+    def validConfigutation(configure, pcausalSet):
+
 #     def computeALLCausalSetConfiguration(stat, NCP, pcausalSet, outputFileName)
 #     def dmvnorm(Z, mean, R)
     
@@ -195,12 +197,12 @@ class PostCal():
                 result = result + "_" + i
         return result
 
-    def printHist2File(fileName) {
+    def printHist2File(fileName):
         f = open(fileName, 'w')
         for i in range of maxCausalSNP + 1:
         	f.write(histValues[i] + " ")
         f.close()
-    }
+
 
     
     # find optimal set using greedy algorithm
