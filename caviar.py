@@ -1,8 +1,9 @@
 import sys
 import numpy as np 
 import Util
-import CaviarModel
-import PostCal
+from CaviarModel import CaviarModel
+from PostCal import PostCal
+import argparse
 #import numpy.kron to do kronecker product
 
 def read_LD(read_fn):
@@ -88,6 +89,7 @@ if __name__ == "__main__":
     else:
         rho_prob = 0.95
 
+    
     if args.M_causal:
         MAX_causal = args.M_causal
     else:
@@ -95,10 +97,10 @@ if __name__ == "__main__":
 
     NCP = 5.2
     gamma = 0.01
-    histFlag = false
+    histFlag = 0
     oc = 0
 
-    caviarModel caviar(M_SIGMA, SNP_NAME, S_VECTOR, O_fn, M_causal, NCP, rho_prob, histFlag, gamma)
+    caviar = CaviarModel(M_SIGMA, SNP_NAME, S_VECTOR, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma)
     caviar.run()
     caviar.finishUp()
 
