@@ -108,7 +108,53 @@ class PostCal():
         return fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     
 #     def likelihood(configure, stat, NCP)
-    def nextBinary(data, size) ;
+    
+    def nextBinary(data, size):
+        i = 0
+        total_one = 0
+        index = size-1
+        one_countinus_in_end = 0
+
+        while index >= 0 and data[index] == 1:
+            index -= 1
+            one_countinus_in_end += 1
+
+        if index >= 0:
+            while index >= 0 and data[index] == 0:
+                index -= 1
+        if index == -1:
+            while i < one_countinus_in_end+1 and i < size:
+                data[i] = 1
+                i += 1
+            i = 0
+            while i < size-one_countinus_in_end-1:
+                data[i+one_countinus_in_end+1] = 0
+                i += 1
+        elif one_countinus_in_end == 0:
+            data[index] = 0
+            data[index+1] = 1
+        else:
+            data[index] = 0
+            while i < one_countinus_in_end + 1:
+                data[i+index+1] = 1
+                if i+index+1 >= size:
+                    print("ERROR3 %d\n", i+index+1)
+                i += 1
+            i = 0
+            while i < size-index-one_countinus_in_end-2:
+                data[i+index+one_countinus_in_end+2] = 0
+                if i+index+one_countinus_in_end+2 >= size:
+                    print("ERROR4 %d\n", i+index+one_countinus_in_end+2)
+                i += 1
+        i = 0
+        total_one = 0
+        for i in range(size):
+            if data[i] == 1:
+                total_one += 1
+
+        return total_one
+    # end nextBinary()
+    
     
     # compute the total likelihood of all configurations
     def computeTotalLikelihood(stat, NCP):
@@ -177,7 +223,9 @@ class PostCal():
             items.append(data(exp(postValues[i]-total_post), i, 0))
 
         print("\n")
-        sort items by number
+        
+        # TODO: not sure if this is correct "std::sort(items.begin(), items.end(), by_number());"
+        items = sorted(items, key=cmp_to_key(by_number))
         for i in range(snpCount):
             pcausalSet[i] = '0'
 
