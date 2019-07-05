@@ -4,7 +4,7 @@ import PostCal
 import Util
 
 class CaviarModel():
-    def _init_(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, M_causal, NCP, rho_prob, histFlag, gamma):
+    def __init__(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma):
         self.histFlag = histFlag
         self.M_SIGMA = M_SIGMA
         self.S_VECTOR = S_VECTOR
@@ -23,7 +23,7 @@ class CaviarModel():
             if(abs(S_VECTOR[i]) > NCP):
                 NCP = abs(S_VECTOR[i])
 
-        post = new PostCal(M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma)
+        post = PostCal(M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma)
 
 
 
@@ -54,15 +54,9 @@ class CaviarModel():
             u.write("\n")
         u.close()
 
-        #not done
-        #not done
-        #not done
-        #not done
-        #not done
-        #TODO
-        s = open(O_fn + "hist",'w')
-        
-        s.close()
+        name = O_fn + "hist"
+        post.printHist2File(name)
+
 
         #log file
         v = open(O_fn + "log",'w')
