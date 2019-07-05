@@ -1,4 +1,7 @@
+import sys
 import numpy as np
+import PostCal
+import Util
 
 class CaviarModel():
     def _init_(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, M_causal, NCP, rho_prob, histFlag, gamma):
