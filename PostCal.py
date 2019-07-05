@@ -197,7 +197,10 @@ class PostCal():
         return result
 
     def printHist2File(fileName) {
-        exportVector2File(fileName, histValues, maxCausalSNP+1);
+        f = open(fileName, 'w')
+        for i in range of maxCausalSNP + 1:
+        	f.write(histValues[i] + " ")
+        f.close()
     }
 
     
