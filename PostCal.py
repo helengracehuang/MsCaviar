@@ -8,21 +8,21 @@ from Util import data
 
 class PostCal():
     #gamma: the probability of SNP being causal
-    #postValues:the posterior value for each SNP being causal
+    #postValues: the posterior value for each SNP being causal
     #sigma: the LD matrix
     #histValues: the probability of the number of causal SNPs, we make the histogram of the causal SNPs
     #snpCount:total number of variants (SNP) in a locus
     #maxCausalSNP: maximum number of causal variants to consider in a locus
-    #totalLikeLihoodLOG:Compute the total log likelihood of all causal status (by likelihood we use prior)
+    #totalLikeLihoodLOG: Compute the total log likelihood of all causal status (by likelihood we use prior)
     def __init__(self, M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma):
         self.M_SIGMA = M_SIGMA
         self.S_VECTOR = S_VECTOR
         self.snpCount = snpCount
-        self.maxCausalSNP = MAX_causal
+        self.maxCausalSNP = int(MAX_causal)
         self.SNP_NAME = SNP_NAME
         self.gamma = gamma
         self.postValues = [0] * self.snpCount
-        self.histValues = [0] * (MAX_causal+1)
+        self.histValues = [0] * (int(MAX_causal)+1)
         self.totalLikeLihoodLOG = 0
 
         statMatrix = np.zeros((self.snpCount,1))
@@ -97,10 +97,10 @@ class PostCal():
                 if maxVal < abs(stat[i]): # absolute val of z-scores
                     maxVal = stat[i]
 
-        Rcc = np.zeros((causalCount, causalCount)) # LD of causal SNPs
-        Zcc = np.zeros((causalCount, 1)) # z-score of causal SNPs
-        mean = np.zeros((causalCount, 1)) # population mean is all 0
-        diagC = np.zeros((causalCount, causalCount))
+        Rcc = np.zeros((causalCount, causalCount)) # LD of causal SNPs: kxk
+        Zcc = np.zeros((causalCount, 1)) # z-score of causal SNPs: kx1
+        mean = np.zeros((causalCount, 1)) # population mean is all 0: kx1
+        diagC = np.zeros((causalCount, causalCount)) # kxk
 
         # construct the matrices & vectors
         for i in range(causalCount):
@@ -115,6 +115,7 @@ class PostCal():
 
     
     # generate a potential configuration of causal set
+    # e.g. (0, 0, 1, 1, 0, 1 ...) stands for causal SNP 3, 4, 6 
     def nextBinary(self, data, size):
         i = 0
         total_one = 0
@@ -170,6 +171,7 @@ class PostCal():
         total_iteration = 0
         configure = [None] * self.snpCount
 
+        # total num of configurations = ∑(i=1, maxCausalSNP)  2^i * nCr(snpCount, i)
         for i in range(self.maxCausalSNP+1):
             total_iteration = total_iteration + int(comb(self.snpCount, i))
 
@@ -184,12 +186,13 @@ class PostCal():
             for j in range(self.snpCount):
                 self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * configure[j])
             self.histValues[num] = self.addlogSpace(self.histValues[num], tmp_likelihood)
-
             num = self.nextBinary(configure, self.snpCount)
-            if i % 1000 == 0:
-                print(float(i) / float(total_iteration) * 100, "%")
 
-        for i in range(self.maxCausalSNP):
+            # progress report
+            if i % 1000 == 0:
+                print(float(i) / float(total_iteration) * 100, "%\r")
+
+        for i in range(self.maxCausalSNP+1):
             self.histValues[i] = exp(self.histValues[i]-sumLikelihood)
 
         return sumLikelihood
@@ -222,8 +225,7 @@ class PostCal():
         self.totalLikeLihoodLOG = self.computeTotalLikelihood(stat, NCP)
 
         # Output the total likelihood to the log file
-        f = open(outputFileName+"log", 'w')
-
+        f = open(outputFileName+"_log.txt", 'w')
         f.write(str(exp(self.totalLikeLihoodLOG)))
         f.close()
 
@@ -250,7 +252,7 @@ class PostCal():
             print(rank[index], rho)
             index += 1
 
-            if rho >= inputRho:
+            if rho >= inputRho: # usually 0.95
                 break
 
         return 0
