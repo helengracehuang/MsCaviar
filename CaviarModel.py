@@ -47,13 +47,4 @@ class CaviarModel():
         name = self.O_fn + "_hist.txt"
         (self.post).printHist2File(name)
 
-
-        #log file
-        v = open(self.O_fn + "_log.txt",'w')
-        v.close()
-        #not done
-        #not done
-        #not done
-        #not done
-        #not done
             
