@@ -10,7 +10,6 @@ class data():
         return abs(self.number) > abs(other.number)
         # "less than" being ">" seems counterintuitive, because we are sorting in reverse order
 
-
 #make sigma positive semi definite
 def makePositiveSemiDefinite(sigma,size):
     matDet = 0
@@ -35,8 +34,9 @@ def makePositiveSemiDefinite(sigma,size):
             addDiag += 0.01
 
     for i in range(size):
-            sigma[i][i] = int(sigma[i][i]) + addDiag
+        sigma[i][i] = int(sigma[i][i]) + addDiag
 
+"""
 #factorial
 def fact(n):
     if n == 0:
@@ -58,8 +58,6 @@ def nCr(n,r):
     for i in range(n,n-r,-1):
         result = result * i
     return result/fact(r)
-
-
 
 def diffVector(data1, data2, size, result):
     for i in range(size):
@@ -87,8 +85,6 @@ def multVectorMatrix(vector, matrix, size, result):
             total_row = total_row + vector[j]*matrix[i][j]
             result[i] = total_row
 
-#I skipped the import data functions AND export data functions
-
 def resetVector(data,size):
     for i in range(size):
         data[i] = '0'
@@ -102,15 +98,4 @@ def snp2Gene(G, snpID, snpCount, geneCount):
         if(G[snpID*geneCount + i] == 1):
             return i
     return -1
-
-
-
-
-
-
-
-
-
-
-
-
+"""
