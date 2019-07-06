@@ -5,17 +5,15 @@ from numpy.linalg import inv, det
 from scipy.special import comb
 import Util
 from Util import data
-from functools import cmp_to_key
-
 
 class PostCal():
-    #self.gamma: the probability of SNP being causal
-    #self.postValues:the posterior value for each SNP being causal
+    #gamma: the probability of SNP being causal
+    #postValues:the posterior value for each SNP being causal
     #sigma: the LD matrix
-    #self.histValues: the probability of the number of causal SNPs, we make the histogram of the causal SNPs
-    #self.snpCount:total number of variants (SNP) in a locus
+    #histValues: the probability of the number of causal SNPs, we make the histogram of the causal SNPs
+    #snpCount:total number of variants (SNP) in a locus
     #maxCausalSNP: maximum number of causal variants to consider in a locus
-    #self.totalLikeLihoodLOG:Compute the total log likelihood of all causal status (by likelihood we use prior)
+    #totalLikeLihoodLOG:Compute the total log likelihood of all causal status (by likelihood we use prior)
     def __init__(self, M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma):
         self.M_SIGMA = M_SIGMA
         self.S_VECTOR = S_VECTOR
@@ -49,6 +47,8 @@ class PostCal():
         if base - min(a,b) > 700:
             return base
         return base + log(1+exp(min(a,b)-base))
+    # end addlogSpace()
+
 
     # C ~ N(0, R)
     # S ~ N(0, R + R * diagC * R)
@@ -59,23 +59,27 @@ class PostCal():
         temp = np.matmul(R, diagC)
         newR = R + np.matmul(temp,R)
         #newR = R + R * diagC * R
+
         ZcenterMean = Z - mean
 
         temp1 = np.matmul(ZcenterMean.transpose(),inv(R))
         res1 = np.matmul(temp1, ZcenterMean)
+        # res1 = ZcenterMean^T * inv(R) * ZcenterMean
 
         temp2 = np.matmul(ZcenterMean.transpose(),inv(newR))
         res2 = np.matmul(temp2, ZcenterMean)
+        # res2 = ZcenterMean^T * inv(newR) * ZcenterMean
 
         if len(res1) == 0 or len(res2) == 0:
             return 0
         else:
             v1 = res1[0][0]/2 - res2[0][0]/2
-            
-        return v1 - log(sqrt(det(newR))) + log(sqrt(det(R)))
-        # log likelihood function of mvn
-        # '/' becomes '-' after taking log
-        # the -ln(2pi)/2 term is cancelled out in the substraction
+            return v1 - log(sqrt(det(newR))) + log(sqrt(det(R)))
+            # log likelihood function of mvn
+            # '/' becomes '-' after taking log
+            # the -ln(2pi)/2 term is cancelled out in the substraction
+    # end fracdmvnorm()
+
     
     # compute the log likelihood of a single configuration
     def fastLikelihood(self, configure, stat, NCP):
@@ -107,7 +111,10 @@ class PostCal():
             # sqrt(n) is absorbed into diagC
 
         return self.fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
+    # end fastLikelihood()
+
     
+    # generate a potential configuration of causal set
     def nextBinary(self, data, size):
         i = 0
         total_one = 0
@@ -152,7 +159,9 @@ class PostCal():
                 total_one += 1
 
         return total_one
-   
+    # end nextBinary()
+
+
     # compute the total likelihood of all configurations
     def computeTotalLikelihood(self, stat, NCP):
         num = 0
@@ -178,14 +187,14 @@ class PostCal():
 
             num = self.nextBinary(configure, self.snpCount)
             if i % 1000 == 0:
-                print("\r                                                                 \r"
-                    , float(i) / float(total_iteration) * 100, "%")
+                print(float(i) / float(total_iteration) * 100, "%")
 
         for i in range(self.maxCausalSNP):
             self.histValues[i] = exp(self.histValues[i]-sumLikelihood)
 
         return sumLikelihood
-    
+    # end computeTotalLikelihood()
+
 
     def convertConfig2String(self,config, size):
         result = "0"
@@ -193,6 +202,7 @@ class PostCal():
             if(config[i] == 1):
                 result = result + "_" + i
         return result
+    # end convertConfig2String()
 
     def printHist2File(self,fileName):
         f = open(fileName, 'w')
@@ -200,7 +210,7 @@ class PostCal():
         for i in range(rang):
             f.write(str(self.histValues[i]) + " ")
         f.close()
-
+    # end printHist2File()
 
     
     # find optimal set using greedy algorithm
@@ -219,15 +229,15 @@ class PostCal():
 
         for i in range(self.snpCount):
             total_post = self.addlogSpace(total_post, self.postValues[i])
-        print("Total Likelihood=", total_post, "SNP=", self.snpCount)
+        print("Total Likelihood =", total_post, "  SNP =", self.snpCount)
 
         # Ouput the posterior to files
         items = []
         for i in range(self.snpCount):
             items.append(data(exp(self.postValues[i]-total_post), i, 0))
-        print("\n")
-        
-        items = sorted(items, key = cmp_to_key(data.by_number))
+
+        items.sort()
+
         for i in range(self.snpCount):
             rank[i] = items[i].ind1
 
@@ -243,33 +253,27 @@ class PostCal():
             if rho >= inputRho:
                 break
 
-        print("\n")
-
         return 0
+    # end findOptimalSetGreedy()
+
 
     def printPost2File(self, fileName):
         total_post = float(0)
         f = open(fileName, 'w')
         title1 = "SNP_ID"
-        f.write(title1.ljust(50))
+        f.write(title1.ljust(30))
         title2 = "Prob_in_pCausalSet"
-        f.write(title2.ljust(50))
+        f.write(title2.ljust(30))
         title3 = "Causal_Post._Prob"
-        f.write(title3.ljust(50))
+        f.write(title3.ljust(30))
         f.write("\n")
 
         for i in range(self.snpCount):
             total_post = self.addlogSpace(total_post, self.postValues[i])
 
         for i in range(self.snpCount):
-            f.write(str(self.SNP_NAME[i]).ljust(50))
-            f.write(str(exp(self.postValues[i] - total_post)).ljust(50))
-            f.write(str(exp(self.postValues[i] - self.totalLikeLihoodLOG)).ljust(50))
+            f.write(str(self.SNP_NAME[i]).ljust(30))
+            f.write(str(exp(self.postValues[i] - total_post)).ljust(30))
+            f.write(str(exp(self.postValues[i] - self.totalLikeLihoodLOG)).ljust(30))
 
         f.close()
-
-
-
-
-
-
