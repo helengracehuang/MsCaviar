@@ -26,7 +26,7 @@ def read_z(read_fn):
         S_VECTOR.append(array[1])
     return SNP_NAME, S_VECTOR
 
-#outputs 4 files
+#outputs 4 files (deprecated)
 def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
     #print the causal set
     f = open(output_file + "_set",'w')
