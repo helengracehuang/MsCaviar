@@ -2,14 +2,17 @@ import numpy as np
 import sys
 
 class data():
-    def data(self, num, ind1, ind2):
+    def __init__(self, num, ind1, ind2):
         self.number = num
         self.ind1 = ind1
         self.ind2 = ind2
 
-    class by_numer():
-        def _call_(self, left, right):
-            return abs(left.number) > abs(right.number)
+    def by_number(a, b):
+        return abs(a.number > abs(b.number))
+    
+    # class by_number():
+    #     def __call__(self, left, right):
+    #         return abs(left.number) > abs(right.number)
 
 
 #make sigma positive semi definite

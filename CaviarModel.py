@@ -7,7 +7,6 @@ class CaviarModel():
     def __init__(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma):
         self.histFlag = histFlag
         self.M_SIGMA = M_SIGMA
-        self.S_VECTOR = S_VECTOR
         self.SNP_NAME = SNP_NAME
         self.MAX_causal = MAX_causal
         self.NCP = NCP
@@ -15,10 +14,14 @@ class CaviarModel():
         self.gamma = gamma
         self.O_fn = O_fn
 
+        for i in range(len(S_VECTOR)):
+        	S_VECTOR[i] = float(S_VECTOR[i])
+        self.S_VECTOR = S_VECTOR
+
         #self.snpCount = len(S_VECTOR)
         snpCount = len(S_VECTOR)
-        self.pcausalSet = [None] * snpCount
-        self.rank = [None] * snpCount
+        self.pcausalSet = np.zeros(snpCount)
+        self.rank = np.zeros(snpCount, dtype = int)
         makePositiveSemiDefinite(M_SIGMA,snpCount)
         for i in range(snpCount):
             if(abs(float(S_VECTOR[i]) > NCP)):
@@ -31,34 +34,22 @@ class CaviarModel():
 
     def finishUp(self):
         #print the causal set
-        f = open(O_fn + "_set",'w')
-        for i in range(len(causal_vec)):
-            f.write(causal_vec[i] + "\n")
+        f = open(self.O_fn + "_set.txt",'w')
+        for i in range(len(self.pcausalSet)):
+        	if self.pcausalSet[i] == 1:
+        		f.write(self.SNP_NAME[i] + "\n")
         f.close()
 
-        #print each SNP and their posterior probs
-        u = open(O_fn + "post",'w')
-        title1 = "SNP_ID"
-        u.write(title1.ljust(20))
-        title2 = "Prob_in_pCausalSet"
-        u.write(title2.ljust(20))
-        title3 = "Causal_Post._Prob"
-        u.write(title3.ljust(20))
-        u.write("\n")
+        fileName = self.O_fn + "_post.txt"
+        (self.post).printPost2File(fileName)
 
-        for i in range(len(SNP)):
-            u.write(SNP[i].ljust(20))
-            u.write(prob_in_causal[i].ljust(20))
-            u.write(causal_post[i].ljust(20))
-            u.write("\n")
-        u.close()
 
-        name = O_fn + "hist"
-        post.printHist2File(name)
+        name = self.O_fn + "_hist.txt"
+        (self.post).printHist2File(name)
 
 
         #log file
-        v = open(O_fn + "log",'w')
+        v = open(self.O_fn + "_log.txt",'w')
         v.close()
         #not done
         #not done
