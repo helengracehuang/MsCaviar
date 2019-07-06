@@ -6,13 +6,9 @@ class data():
         self.number = num
         self.ind1 = ind1
         self.ind2 = ind2
-
-    def by_number(a, b):
-        return abs(a.number > abs(b.number))
-    
-    # class by_number():
-    #     def __call__(self, left, right):
-    #         return abs(left.number) > abs(right.number)
+    def __lt__(self, other):
+        return abs(self.number) > abs(other.number)
+        # "less than" being ">" seems counterintuitive, because we are sorting in reverse order
 
 
 #make sigma positive semi definite
