@@ -171,7 +171,7 @@ class PostCal():
         total_iteration = 0
         configure = [None] * self.snpCount
 
-        # total num of configurations = ∑(i=1, maxCausalSNP)  2^i * nCr(snpCount, i)
+        # total num of configurations = Sigma(i=1, maxCausalSNP)  2^i * nCr(snpCount, i)
         for i in range(self.maxCausalSNP+1):
             total_iteration = total_iteration + int(comb(self.snpCount, i))
 
