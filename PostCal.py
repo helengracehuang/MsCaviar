@@ -277,5 +277,6 @@ class PostCal():
             f.write(str(self.SNP_NAME[i]).ljust(30))
             f.write(str(exp(self.postValues[i] - total_post)).ljust(30))
             f.write(str(exp(self.postValues[i] - self.totalLikeLihoodLOG)).ljust(30))
+            f.write("\n")
 
         f.close()
