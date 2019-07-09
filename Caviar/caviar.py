@@ -74,7 +74,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--rho-prob', required=False, dest='pho_probability',
                         help='set pho probability, default is 0.95')
     parser.add_argument('-c', '--causal', required=False, dest='M_causal',
-                        help='set the maximum number of causal SNPs, default is 2')
+                        help='set the minimum number of causal SNPs, default is 2')
 
     args = parser.parse_args()
     O_fn = args.output_file
