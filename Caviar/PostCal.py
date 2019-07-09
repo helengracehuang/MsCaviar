@@ -116,7 +116,7 @@ class PostCal():
     # end fastLikelihood()
 
 
-    #try to attempt woodbury
+    #use Woodbury
     def Likelihood(self,configure,stat,NCP):
         causalCount = 0
         index_C = 0
@@ -130,7 +130,7 @@ class PostCal():
             tmpResultMatrix11 = np.matmul(tmpResultMatrix1N, self.statMatrix)
             res = tmpResultMatrix11[0][0]
             matDet = self.sigmaDet
-            return exp(-res / 2) / sqrt(abs(matDet))
+            return -res/2-sqrt(abs(matDet))
 
         U_mat = np.zeros((self.snpCount, causalCount))
         V_mat = np.zeros((causalCount, self.snpCount))
@@ -155,13 +155,14 @@ class PostCal():
         res = tmpResultMatrix11[0][0]
 
         if matDet == 0:
-            print("Error")
+            print("Error, the matrix is singular and we cannot fix it")
             return 0
 
         tmplogDet = log(sqrt(abs(matDet)))
-        tmpFinalRes = -res/2 - tmplogDet
+        tmpFinalRes = - res/2 - tmplogDet
         '''if tmpFinalRes > 700:
             return exp(700)'''
+        #print(tmpFinalRes)
         return tmpFinalRes
 
     
@@ -265,7 +266,6 @@ class PostCal():
         f.close()
     # end printHist2File()
 
-    
     # find optimal set using greedy algorithm
     def findOptimalSetGreedy(self, stat, NCP, pcausalSet, rank, inputRho, outputFileName):
         index = 0
@@ -316,7 +316,7 @@ class PostCal():
         f.write(title1.ljust(30))
         title2 = "Prob_in_pCausalSet"
         f.write(title2.ljust(30))
-        title3 = "Causal_Post._Prob"
+        title3 = "Causal_Post_Prob"
         f.write(title3.ljust(30))
         f.write("\n")
 
