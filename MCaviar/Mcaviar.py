@@ -76,6 +76,8 @@ if __name__ == "__main__":
                         help='set pho probability, default is 0.95')
     parser.add_argument('-c', '--causal', required=False, dest='M_causal',
                         help='set the maximum number of causal SNPs, default is 2')
+    parser.add_argument('-t', '--heterogeneity', required=False, dest='Tau_squared',
+                        help='set the heterogeneity (t^2) across studies, default is 0.2')
 
     
     args = parser.parse_args()
@@ -107,6 +109,11 @@ if __name__ == "__main__":
         MAX_causal = args.M_causal
     else:
         MAX_causal = 2
+    
+    if args.Tau_squared:
+        t_squared = args.Tau_squared
+    else:
+        t_squared = 0.2
 
     print(LD_fn)
     print(Z_fn)
