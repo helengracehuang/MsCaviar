@@ -92,13 +92,13 @@ if __name__ == "__main__":
     SNP_NAME = [None] * len(Z_fn_list)
 
     if(len(LD_fn_list) != len(Z_fn_list)):
-        print("Number of files do not match, please try again.\n")
+        print("Number of files do not match, please try again.")
 
     for i in range(len(LD_fn_list)):
         LD_fn[i] = read_LD(LD_root + "/" + LD_fn_list[i])
 
     for i in range(len(Z_fn_list)):
-        SNP_NAME[i],Z_fn[i] = read_z(Z_root + "/" + Z_fn_list[i])
+        SNP_NAME[i], Z_fn[i] = read_z(Z_root + "/" + Z_fn_list[i])
 
     if args.pho_probability:
         rho_prob = args.pho_probability
