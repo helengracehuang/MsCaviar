@@ -34,6 +34,7 @@ class MPostCal():
             self.statMatrix[i][0] = S_VECTOR[i]
             self.statMatrixtTran[0][i] = S_VECTOR[i]
 
+#######sigmaMatrix now an array of sigmamatrices for each study i, same for invSigmaMatrix, sigmaDet
         self.sigmaMatrix = []
         self.invSigmaMatrix = []
         self.sigmaDet = []
@@ -117,8 +118,9 @@ class MPostCal():
             for j in range(causalCount):
                 Rcc[i][j] = self.sigmaMatrix[causalIndex[i]][causalIndex[j]]
             Zcc[i][0] = stat[causalIndex[i]]
-
-        #diagC[i][i] = NCP
+            #diagC[i][i] = NCP
+        
+        #Kronecker product for diagC
         Identity_M = np.identity(num_of_studies)
         Matrix_of_1 = np.ones((num_of_studies, num_of_studies))
         #TODO: treating sigma_G_Squared as 1 - tau_squared
@@ -132,10 +134,11 @@ class MPostCal():
 
         return self.fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     # end fastLikelihood()
+    
 
 
     #use Woodbury
-    def Likelihood(self,configure,stat,NCP):
+    def Likelihood(self, configure, stat, NCP):
         causalCount = 0
         index_C = 0
         matDet = 0
@@ -150,20 +153,28 @@ class MPostCal():
             matDet = self.sigmaDet
             return -res/2-sqrt(abs(matDet))
 
-        U_mat = np.zeros((self.snpCount, causalCount))
-        V_mat = np.zeros((causalCount, self.snpCount))
-        VU_mat = np.zeros((causalCount, causalCount))
+        #U is mn by kn matrix of rows corresponding to causal SNP in sigmaC
+        #V is kn by mn matrix of corresponding slms of sigma
+        # -> VU is kn by kn
+        U_mat = np.zeros((self.snpCount * self.num_of_studies, causalCount * self.num_of_studies))
+        V_mat = np.zeros((causalCount * self.num_of_studies, self.snpCount * self.num_of_studies))
+        VU_mat = np.zeros((causalCount * self.num_of_studies, causalCount * self.num_of_studies))
 
+########TODO how to fill U and V
         for i in range(self.snpCount):
             if configure[i] != 0:
                 for j in range(self.snpCount):
-                    U_mat[j,index_C] = self.sigmaMatrix[j][i]
+                    U_mat[j][index_C] = self.sigmaMatrix[j][i]
                 V_mat[index_C][i] = NCP
                 index_C = index_C + 1
 
-        VU_mat = np.matmul(V_mat,U_mat)
-        I_AA = np.identity(self.snpCount)
-        tmp_CC = np.identity(causalCount) + VU_mat
+        #VU_mat = np.matmul(V_mat,U_mat)
+        VU_mat = kron(V_mat,U_mat)
+        
+        #A is mn by mn
+        I_AA = np.identity(self.snpCount * self.num_of_studies)
+        #tmp_CC is (I+VU), where I is kn by kn
+        tmp_CC = np.identity(causalCount * self.num_of_studies) + VU_mat
         matDet = det(tmp_CC) * self.sigmaDet
         temp1 = np.matmul(self.invSigmaMatrix,U_mat)
         temp2 = np.matmul(temp1,pinv(tmp_CC))
@@ -248,7 +259,7 @@ class MPostCal():
             configure[i] = 0
 
         for i in range(total_iteration):
-            tmp_likelihood = self.fastLikelihood(configure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
+            tmp_likelihood = self.Likelihood(configure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
             for j in range(self.snpCount):
                 self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * configure[j])

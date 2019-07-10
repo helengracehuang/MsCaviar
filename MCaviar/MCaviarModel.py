@@ -3,6 +3,7 @@ import numpy as np
 from MPostCal import MPostCal
 from Util import makePositiveSemiDefinite
 
+#find if an element is in the array. Use later to filter out SNPs that are not present in some studies, don't worry for now
 def find(arr, str):
     for i in range(len(arr)):
         if arr[i] == str:
@@ -10,6 +11,7 @@ def find(arr, str):
     return 0
 
 class MCaviarModel():
+    #M_SIGMA is a vector of sigma matrices
     def __init__(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared):
         self.histFlag = histFlag
         self.M_SIGMA = M_SIGMA
@@ -21,8 +23,8 @@ class MCaviarModel():
         self.O_fn = O_fn
         self.t_squared = t_squared
 
-
-        #snpCount = the number of SNPs available in ALL Studies
+        #snpCount = the number of SNPs available in ALL Studies. For studies with diffrent number of SNPs, we only get the ones
+        #that are in all the studies. snpCount = len(file with smallest number of SNPs)
         '''all_SNP = SNP_NAME[0]
         for i in range(SNP_NAME[0]):
             for j in range(SNP_NAME):
@@ -59,8 +61,8 @@ class MCaviarModel():
             if(abs(float(S_MATRIX[i][j]) > NCP)):
                 NCP = abs(float(S_VECTOR[i]))
 
-        self.post = M
-    PostCal(M_SIGMA, S_MATRIX, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,len(S_VECTOR))
+######TODO: have post for each studies and compute likelihood then?
+        self.post = MPostCal(M_SIGMA, S_MATRIX, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,len(S_VECTOR))
 
     def run(self):
         (self.post).findOptimalSetGreedy(self.S_MATRIX, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
