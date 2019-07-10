@@ -29,7 +29,7 @@ def read_z(read_fn):
         S_VECTOR.append(array[1])
     return SNP_NAME, S_VECTOR
 
-#outputs 4 files (deprecated)
+#outputs 4 files
 def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
     #print the causal set
     f = open(output_file + "_set",'w')
@@ -115,6 +115,12 @@ if __name__ == "__main__":
     else:
         t_squared = 0.2
 
-    print(LD_fn)
-    print(Z_fn)
+    NCP = 5.2
+    histFlag = True
+    gamma = 0.01
+    
+    caviar = CaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma)
+    caviar.run()
+    caviar.finishUp()
 
+    
