@@ -1,8 +1,8 @@
 import sys
 import numpy as np 
 import Util
-from CaviarModel import CaviarModel
-from PostCal import PostCal
+from MCaviarModel import MCaviarModel
+from MPostCal import MPostCal
 import argparse
 import os
 
@@ -64,7 +64,7 @@ def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='CAVIAR is a statistical framework that quantifies the probability of each variant '
+    parser = argparse.ArgumentParser(description='MCAVIAR is a statistical framework that quantifies the probability of each variant '
         'to be causal while allowing with arbitrary number of causal variants.')
     parser.add_argument('-o', '--out', required=True, dest='output_file',
                         help='output file name')
@@ -118,9 +118,9 @@ if __name__ == "__main__":
     NCP = 5.2
     histFlag = True
     gamma = 0.01
-    
-    caviar = CaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma)
-    caviar.run()
-    caviar.finishUp()
+
+    Mcaviar = MCaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared)
+    Mcaviar.run()
+    Mcaviar.finishUp()
 
     
