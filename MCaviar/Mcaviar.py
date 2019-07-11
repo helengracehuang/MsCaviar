@@ -54,14 +54,6 @@ def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
         u.write("\n")
     u.close()
 
-    #histogram file
-    s = open(output_file + "hist",'w')
-    s.close()
-
-    #log file
-    v = open(output_file + "log",'w')
-    v.close()
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='MCAVIAR is a statistical framework that quantifies the probability of each variant '
