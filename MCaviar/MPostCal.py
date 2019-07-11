@@ -15,9 +15,9 @@ class MPostCal():
     #snpCount:total number of variants (SNP) in a locus
     #maxCausalSNP: maximum number of causal variants to consider in a locus
     #totalLikeLihoodLOG: Compute the total log likelihood of all causal status (by likelihood we use prior)
-    def __init__(self, M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma, t_squared, num_of_studies):
+    def __init__(self, M_SIGMA, S_MATRIX, snpCount, MAX_causal, SNP_NAME, gamma, t_squared, num_of_studies):
         self.M_SIGMA = M_SIGMA
-        self.S_VECTOR = S_VECTOR
+        self.S_MATRIX = S_MATRIX
         self.snpCount = snpCount
         self.maxCausalSNP = int(MAX_causal)
         self.SNP_NAME = SNP_NAME
@@ -28,13 +28,16 @@ class MPostCal():
         self.t_squared = t_squared
         self.num_of_studies = num_of_studies
 
-        self.statMatrix = np.zeros((self.snpCount,1))
-        self.statMatrixtTran = np.zeros((1,self.snpCount))
+        #statMatrix is now an m by n matrix, m = number of snps, n = num of studies
+        #statMatrix is the z-score matrix
+        self.statMatrix = np.zeros((self.snpCount,self.num_of_studies))
+        self.statMatrixtTran = np.zeros((self.num_of_studies,self.snpCount))
         for i in range(self.snpCount):
-            self.statMatrix[i][0] = S_VECTOR[i]
-            self.statMatrixtTran[0][i] = S_VECTOR[i]
+            for j in range(self.num_of_studies):
+                self.statMatrix[i][j] = S_MATRIX[i][j]
+                self.statMatrixtTran[j][i] = S_MATRIX[i][j]
 
-#######sigmaMatrix now an array of sigmamatrices for each study i, same for invSigmaMatrix, sigmaDet
+        #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         self.sigmaMatrix = []
         self.invSigmaMatrix = []
         self.sigmaDet = []
@@ -44,8 +47,8 @@ class MPostCal():
                 for k in range(self.snpCount):
                     self.temp_mat[j][k] = (M_SIGMA[i])[j][k]
             self.sigmaMatrix.append(temp_mat)
-            self.sigmaDet.append(det(temp_mat))
             self.invSigmaMatrix.append(inv(temp_mat))
+            self.sigmaDet.append(det(temp_mat))
 
     # addition in log space
     def addlogSpace(self,a, b):
@@ -65,8 +68,6 @@ class MPostCal():
     # auxiliary function for fastLikelihood
     # dmvnorm is the pdf of multivariate normal distribution
     # dmvnorm(Z, mean=rep(0,nrow(R)), R + R %*% R) / dmvnorm(Z, mean=rep(0, nrow(R)), R))
-
-    #######keep same, pass in sigma i for study i
     def fracdmvnorm(self, Z, mean, R, diagC, NCP):
         temp = np.matmul(R, diagC)
         newR = R + np.matmul(temp,R)
@@ -120,24 +121,29 @@ class MPostCal():
             Zcc[i][0] = stat[causalIndex[i]]
             #diagC[i][i] = NCP
         
-        #Kronecker product for diagC
-        Identity_M = np.identity(num_of_studies)
-        Matrix_of_1 = np.ones((num_of_studies, num_of_studies))
-        #TODO: treating sigma_G_Squared as 1 - tau_squared
-        temp1 = t_squared * I_M + (1 - t_squared) * Matrix_of_1
-        temp2 = np.zeros(snpCount,snpCount)
-        for i in range(pcausalSet):
-            if pcausalSet[i] == 1:
-                temp2[i][i] = 1
-        diagC = kron(temp1, temp2)
         # sqrt(n) is absorbed into diagC
 
         return self.fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     # end fastLikelihood()
     
+    #construct sigma_C by the kronecker product, it is mn by mn
+    
+
+    def construct_diagC(pcausalSet):
+        #Kronecker product for diagC
+        Identity_M = np.identity(self.num_of_studies)
+        Matrix_of_1 = np.ones((self.num_of_studies, self.num_of_studies))
+        #here we treat sigma_G_Squared as 1 - tau_squared
+        temp1 = self.t_squared * Identity_M + (1 - self.t_squared) * Matrix_of_1
+        temp2 = np.zeros(self.snpCount,self.snpCount)
+        for i in range(pcausalSet):
+            if pcausalSet[i] == 1:
+                temp2[i][i] = 1
+        diagC = kron(temp1, temp2)
+        return diagC
 
 
-    #use Woodbury
+    #here we compute the likelihood by using woodbury
     def Likelihood(self, configure, stat, NCP):
         causalCount = 0
         index_C = 0
@@ -147,9 +153,15 @@ class MPostCal():
         for i in range(self.snpCount):
             causalCount = causalCount + configure[i]
         if causalCount == 0:
-            tmpResultMatrix1N = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
-            tmpResultMatrix11 = np.matmul(tmpResultMatrix1N, self.statMatrix)
-            res = tmpResultMatrix11[0][0]
+            tmpResultMatrixNM = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
+            tmpResultMatrixNN = np.matmul(tmpResultMatrixNM, self.statMatrix)
+
+            #TODO: tmpResult is now n by n, do we add up everything in the matrix?
+            res = 0
+            for i in range(len(tmpResultMatrixNN)):
+                for j in range(len(tmpResultMatrixNN[i])):
+                    res = res + tmpResultMatrixNN[i][j]
+            #res = tmpResultMatrix11[0][0]
             matDet = self.sigmaDet
             return -res/2-sqrt(abs(matDet))
 
@@ -160,7 +172,7 @@ class MPostCal():
         V_mat = np.zeros((causalCount * self.num_of_studies, self.snpCount * self.num_of_studies))
         VU_mat = np.zeros((causalCount * self.num_of_studies, causalCount * self.num_of_studies))
 
-########TODO how to fill U and V
+        #TODO how to fill U and V
         for i in range(self.snpCount):
             if configure[i] != 0:
                 for j in range(self.snpCount):
@@ -168,14 +180,17 @@ class MPostCal():
                 V_mat[index_C][i] = NCP
                 index_C = index_C + 1
 
-        #VU_mat = np.matmul(V_mat,U_mat)
-        VU_mat = kron(V_mat,U_mat)
+        #VU is kn by kn
+        VU_mat = np.matmul(V_mat,U_mat)
+        #VU_mat = kron(V_mat,U_mat)
         
         #A is mn by mn
         I_AA = np.identity(self.snpCount * self.num_of_studies)
         #tmp_CC is (I+VU), where I is kn by kn
         tmp_CC = np.identity(causalCount * self.num_of_studies) + VU_mat
         matDet = det(tmp_CC) * self.sigmaDet
+
+        ###TODO: how are we calculating w.r.t each LD matrix
         temp1 = np.matmul(self.invSigmaMatrix,U_mat)
         temp2 = np.matmul(temp1,pinv(tmp_CC))
         tmp_AA = self.invSigmaMatrix - (np.matmul(temp2,V_mat))
@@ -188,8 +203,6 @@ class MPostCal():
             return 0
         tmplogDet = log(sqrt(abs(matDet)))
         tmpFinalRes = - res/2 - tmplogDet
-        '''if tmpFinalRes > 700:
-            return exp(700)'''
         return tmpFinalRes
 
     
