@@ -13,8 +13,15 @@ def read_LD(read_fn):
     for line in f:
         line = line.strip()
         array = line.split()
+        for i in range(len(array)):
+            array[i] = float(array[i])
         SIGMA.append(array)
-    return SIGMA
+
+    eye = np.identity(2)
+    # print(SIGMA)
+    SIGMA2 = np.kron(SIGMA, eye)
+
+    return SIGMA2
 
 #returns 2*n list of [SNP name, association statistics]
 def read_z(read_fn):
@@ -27,7 +34,15 @@ def read_z(read_fn):
         array = line.split()
         SNP_NAME.append(array[0])
         S_VECTOR.append(array[1])
-    return SNP_NAME, S_VECTOR
+    
+    S_VECTOR2 = []
+    SNP_NAME2 = []
+    S_VECTOR2.extend(S_VECTOR)
+    S_VECTOR2.extend(S_VECTOR)
+    SNP_NAME2.extend(SNP_NAME)
+    SNP_NAME2.extend(SNP_NAME)
+
+    return SNP_NAME2, S_VECTOR2
 
 #outputs 4 files (deprecated)
 def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
