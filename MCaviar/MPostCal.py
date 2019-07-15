@@ -251,6 +251,11 @@ class MPostCal():
             if data[i] == 1:
                 total_one += 1
 
+        # extend causal set configuration to all studies
+        for i in range(num_of_studies):
+            data.extend(data)
+        # print(data)
+
         return total_one
     # end nextBinary()
 
