@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+from numpy import kron
 from MPostCal import MPostCal
 from Util import makePositiveSemiDefinite
 
@@ -38,8 +39,8 @@ def Msort(index, arr1, arr2, matrix):
         np.append(temp_arr2,arr2[index[i]])
         #get row
         np.append(temp_mat1,matrix[index[i]])
-        #get clm
     
+    #get column as the rows, then transpose the matrix    
     for i in range(len(index)):
         np.append(temp_mat2, temp_mat1[:,index[i]])
 
@@ -83,9 +84,6 @@ class MCaviarModel():
 
         #snpCount = the number of SNPs available in ALL Studies. For studies with diffrent number of SNPs, we only get the ones
         #that are in all the studies. snpCount = len(file with smallest number of SNPs)
-
-
-        #right now assume user input it the same SNPs sorted the same
         snpCount = len(SNP_NAME[0])
         self.pcausalSet = np.zeroes((snpCount,snpCount))
         self.rank = np.zeros((snpCount,snpCount), dtype = int)
@@ -95,22 +93,37 @@ class MCaviarModel():
                 S_VECTOR[i][j] = float(S_VECTOR[i][j])
         self.S_VECTOR = S_VECTOR
 
-        #S_matrix is n by n
+        #S_matrix is m by n
+        #S matrix becomes S vector
+        S_LONG_VEC = np.empty()
+        for i in range(len(self.S_VECTOR)):
+            np.concatenate(S_LONG_VEC, self.S_VECTOR[i])
+
+        '''
         S_MATRIX = np.zeros((snpCount, snpCount))
         for i in range(len(S_VECTOR)):
             for j in range(len(S_VECTOR[i])):
                 S_MATRIX[j][i] = S_VECTOR[i][j]
-        self.S_MATRIX = S_MATRIX
+        self.S_MATRIX = S_MATRIX'''
+
+        for i in range(snpCount):
+            for j in range(snpCount):
+                if(abs(float(S_LONG_VEC[i*snpCount + j]) > NCP)):
+                    NCP = abs(float(S_LONG_VEC[i*snpCount + j]))
 
         for i in range(len(M_SIGMA)):
             makePositiveSemiDefinite(M_SIGMA[i],snpCount)
 
-        for i in range(snpCount):
-            for j in range(snpCount):
-            if(abs(float(S_MATRIX[i][j]) > NCP)):
-                NCP = abs(float(S_VECTOR[i]))
+        BIG_SIGMA = np.zeros((snpCount*num_of_studies, snpCount*num_of_studies))
+        for i in range(len(M_SIGMA)):
+            #this is n by n
+            temp_sigma = np.zeros((num_of_studies*num_of_studies))
+            temp_sigma[i][i] = 1
 
-        self.post = MPostCal(M_SIGMA, S_MATRIX, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,num_of_studies)
+            temp_sigma = kron(temp_sigma, M_SIGMA[i])
+            BIG_SIGMA = BIG_SIGMA + temp_sigma
+
+        self.post = MPostCal(BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,num_of_studies)
 
     def run(self):
         (self.post).findOptimalSetGreedy(self.S_MATRIX, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
