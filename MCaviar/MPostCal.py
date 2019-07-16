@@ -1,4 +1,3 @@
-
 import sys
 import numpy as np
 from math import log, sqrt, exp
@@ -36,6 +35,7 @@ class MPostCal():
         for i in range(self.snpCount * self.num_of_studies):
             self.statMatrix[i][0] = S_LONG_VEC[i]
             self.statMatrixtTran[0][i] = S_LONG_VEC[i]
+       
         """
         self.statMatrix = np.zeros((self.snpCount,self.num_of_studies))
         self.statMatrixtTran = np.zeros((self.num_of_studies,self.snpCount))
@@ -47,9 +47,9 @@ class MPostCal():
 
         #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         self.sigmaMatrix = BIG_SIGMA
-
         self.sigmaDet = det(self.sigmaMatrix)
         self.invSigmaMatrix = inv(self.sigmaMatrix)
+        
         """
         self.sigmaMatrix = []
         self.invSigmaMatrix = []
@@ -136,7 +136,6 @@ class MPostCal():
             #diagC[i][i] = NCP
         
         # sqrt(n) is absorbed into diagC
-
         return self.fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     # end fastLikelihood()
     
@@ -168,14 +167,12 @@ class MPostCal():
             causalCount = causalCount + configure[i]
         if causalCount == 0:
             tmpResultMatrixNM = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
-            tmpResultMatrixNN = np.matmul(tmpResultMatrixNM, self.statMatrix)
-
-            #TODO: tmpResult is now n by n, do we add up everything in the matrix?
-            res = 0
+            tmpResultMatrix11 = np.matmul(tmpResultMatrixNM, self.statMatrix)
+            '''res = 0
             for i in range(len(tmpResultMatrixNN)):
                 for j in range(len(tmpResultMatrixNN[i])):
-                    res = res + tmpResultMatrixNN[i][j]
-            #res = tmpResultMatrix11[0][0]
+                    res = res + tmpResultMatrixNN[i][j]'''
+            res = tmpResultMatrix11[0][0]
             matDet = self.sigmaDet
             return -res/2-sqrt(abs(matDet))
 
@@ -186,7 +183,6 @@ class MPostCal():
         V_mat = np.zeros((causalCount * self.num_of_studies, self.snpCount * self.num_of_studies))
         VU_mat = np.zeros((causalCount * self.num_of_studies, causalCount * self.num_of_studies))
 
-        #TODO how to fill U and V
         for i in range(self.snpCount * self.num_of_studies):
             if configure[i] != 0:
                 for j in range(self.snpCount * self.num_of_studies):
@@ -204,7 +200,6 @@ class MPostCal():
         tmp_CC = np.identity(causalCount * self.num_of_studies) + VU_mat
         matDet = det(tmp_CC) * self.sigmaDet
 
-        ###TODO: how are we calculating w.r.t each LD matrix
         temp1 = np.matmul(self.invSigmaMatrix,U_mat)
         temp2 = np.matmul(temp1,pinv(tmp_CC))
         tmp_AA = self.invSigmaMatrix - (np.matmul(temp2,V_mat))
@@ -300,7 +295,6 @@ class MPostCal():
             num = self.nextBinary(configure, self.snpCount)
 
             # extend causal set configuration to all studies
-            # TODO: right now it is SUPER slow
             tempConfigure = []
             for m in range(self.num_of_studies):
                 tempConfigure.extend(configure)
@@ -316,7 +310,7 @@ class MPostCal():
     # end computeTotalLikelihood()
 
 
-    def convertConfig2String(self,config, size):
+    def convertConfig2String(self, config, size):
         result = "0"
         for i in range(size):
             if(config[i] == 1):
@@ -324,7 +318,7 @@ class MPostCal():
         return result
     # end convertConfig2String()
 
-    def printHist2File(self,fileName):
+    def printHist2File(self, fileName):
         f = open(fileName, 'w')
         rang = self.maxCausalSNP + 1
         for i in range(rang):
@@ -394,3 +388,6 @@ class MPostCal():
             f.write(str(exp(self.postValues[i] - total_post)).ljust(30))
             f.write(str(exp(self.postValues[i] - self.totalLikeLihoodLOG)).ljust(30))
             f.write("\n")
+
+
+            
