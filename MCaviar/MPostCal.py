@@ -4,8 +4,8 @@ import numpy as np
 from math import log, sqrt, exp
 from numpy.linalg import inv, det, pinv
 from scipy.special import comb
-import Util
-from Util import data
+import MUtil
+from MUtil import data
 from numpy import kron
 
 class MPostCal():
@@ -17,8 +17,8 @@ class MPostCal():
     #maxCausalSNP: maximum number of causal variants to consider in a locus
     #totalLikeLihoodLOG: Compute the total log likelihood of all causal status (by likelihood we use prior)
     def __init__(self, BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared, num_of_studies):
-        self.M_SIGMA = M_SIGMA
-        self.S_MATRIX = S_MATRIX
+        self.M_SIGMA = BIG_SIGMA
+        self.S_MATRIX = S_LONG_VEC
         self.snpCount = snpCount
         self.maxCausalSNP = int(MAX_causal)
         self.SNP_NAME = SNP_NAME
@@ -46,7 +46,6 @@ class MPostCal():
         """
 
         #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
-        self.sigmaMatrix = np.empty()
         self.sigmaMatrix = BIG_SIGMA
 
         self.sigmaDet = det(self.sigmaMatrix)
@@ -267,7 +266,7 @@ class MPostCal():
                 total_one += 1
 
         # extend causal set configuration to all studies
-        for i in range(num_of_studies):
+        for i in range(self.num_of_studies):
             data.extend(data)
         # print(data)
 
