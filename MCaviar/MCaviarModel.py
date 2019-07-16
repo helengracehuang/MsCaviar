@@ -1,7 +1,8 @@
 import sys
 import numpy as np
+from numpy import kron
 from MPostCal import MPostCal
-from Util import makePositiveSemiDefinite
+from MUtil import makePositiveSemiDefinite
 
 #return if string is not in array
 def not_find(arr, str):
@@ -26,12 +27,12 @@ def swap(matrix, arr1, arr2, pos1, pos2):
 
 def Msort(index, arr1, arr2, matrix):
     #names
-    temp_arr1 = np.empty()
+    temp_arr1 = np.array([])
     #zscre
-    temp_arr2 = np.empty()
+    temp_arr2 = np.array([])
     #LD mat
-    temp_mat1 = np.empty()
-    temp_mat2 = np.empty()
+    temp_mat1 = np.array([])
+    temp_mat2 = np.array([])
 
     for i in range(len(index)):
         np.append(temp_arr1,arr1[index[i]])
@@ -48,11 +49,12 @@ def Msort(index, arr1, arr2, matrix):
     return temp_arr1, temp_arr2, temp_mat2
 
 
-#return intersection of all arrays in a list
-def find_intersection(list):
-    intersect = set(list[0])
-    for i in range(1,len(list)):
-        intersect = intersect.intersection(set(list[i]))
+#return intersection of all arrays in snp_name
+def find_intersection(snp_name):
+    intersect = set(snp_name[0])
+    for i in range(1,len(snp_name)):
+        intersect = intersect.intersection(set(snp_name[i]))
+    print("intersect:", intersect)
     return list(intersect)
 
 class MCaviarModel():
@@ -70,15 +72,17 @@ class MCaviarModel():
         self.num_of_studies = len(M_SIGMA)
 
 
+        # TODO: MIGHT HAVE PROBLEMS WITH studies with different lengths
         intersect = find_intersection(SNP_NAME)
         for i in range(len(SNP_NAME)):
             for j in range(len(SNP_NAME[i])):
-                for k in range(len(intersect)):
-                    if not_find(SNP_NAME[i][j], intersect[k]):
-                        remove(M_SIGMA[i],S_VECTOR[i], SNP_NAME[i], j)
+                if not_find(intersect, SNP_NAME[i][j]):
+                    remove(M_SIGMA[i],S_VECTOR[i], SNP_NAME[i], j)
 
+
+        SNP_NAME = np.asarray(SNP_NAME)
         for i in range(len(SNP_NAME)):
-            index = SNP_NAME[i].argsort
+            index = SNP_NAME[i].argsort()
             SNP_NAME[i], S_VECTOR[i], M_SIGMA[i] = Msort(index, SNP_NAME[i], S_VECTOR[i], M_SIGMA[i])
 
         #snpCount = the number of SNPs available in ALL Studies. For studies with diffrent number of SNPs, we only get the ones
@@ -122,7 +126,7 @@ class MCaviarModel():
             temp_sigma = kron(temp_sigma, M_SIGMA[i])
             BIG_SIGMA = BIG_SIGMA + temp_sigma
 
-        self.post = MPostCal(BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME[0], gamma, t_squared ,num_of_studies)
+        self.post = MPostCal(BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,num_of_studies)
 
     def run(self):
         (self.post).findOptimalSetGreedy(self.S_MATRIX, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
@@ -140,5 +144,3 @@ class MCaviarModel():
 
         name = self.O_fn + "_hist.txt"
         (self.post).printHist2File(name)
-
-            
