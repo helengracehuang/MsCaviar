@@ -27,7 +27,7 @@ def swap(matrix, arr1, arr2, pos1, pos2):
 
 def Msort(index, arr1, arr2, matrix):
     #names
-    temp_arr1 = np.zeros(len(index))
+    temp_arr1 = np.empty(len(index), dtype=str)
     #zscre
     temp_arr2 = np.zeros(len(index))
     #LD mat
@@ -38,7 +38,7 @@ def Msort(index, arr1, arr2, matrix):
         temp_arr1[i]= arr1[index[i]]
         temp_arr2[i] = arr2[index[i]]
         #get row
-        temp_mat1[i] = mat[index[i]]
+        temp_mat1[i] = matrix[index[i]]
     temp_mat1 = temp_mat1.transpose()
 
     #get column as the rows, then transpose the matrix    
@@ -88,7 +88,7 @@ class MCaviarModel():
         #snpCount = the number of SNPs available in ALL Studies. For studies with diffrent number of SNPs, we only get the ones
         #that are in all the studies. snpCount = len(file with smallest number of SNPs)
         snpCount = len(SNP_NAME[0])
-        self.pcausalSet = np.zeroes((snpCount,snpCount))
+        self.pcausalSet = np.zeros((snpCount,snpCount))
         self.rank = np.zeros((snpCount,snpCount), dtype = int)
 
         for i in range(len(S_VECTOR)):
@@ -98,9 +98,9 @@ class MCaviarModel():
 
         #S_matrix is m by n
         #S matrix becomes S vector
-        S_LONG_VEC = np.empty()
+        self.S_LONG_VEC = np.empty((0))
         for i in range(len(self.S_VECTOR)):
-            np.concatenate(S_LONG_VEC, self.S_VECTOR[i])
+            self.S_LONG_VEC = np.append(self.S_LONG_VEC, self.S_VECTOR[i])
 
         '''
         S_MATRIX = np.zeros((snpCount, snpCount))
@@ -109,27 +109,27 @@ class MCaviarModel():
                 S_MATRIX[j][i] = S_VECTOR[i][j]
         self.S_MATRIX = S_MATRIX'''
 
-        for i in range(snpCount):
+        for i in range(self.num_of_studies):
             for j in range(snpCount):
-                if(abs(float(S_LONG_VEC[i*snpCount + j]) > NCP)):
-                    NCP = abs(float(S_LONG_VEC[i*snpCount + j]))
+                if(abs(float(self.S_LONG_VEC[i*snpCount + j]) > NCP)):
+                    NCP = abs(float(self.S_LONG_VEC[i*snpCount + j]))
 
         for i in range(len(M_SIGMA)):
             makePositiveSemiDefinite(M_SIGMA[i],snpCount)
 
-        BIG_SIGMA = np.zeros((snpCount*num_of_studies, snpCount*num_of_studies))
+        BIG_SIGMA = np.zeros((snpCount * self.num_of_studies, snpCount * self.num_of_studies))
         for i in range(len(M_SIGMA)):
             #this is n by n
-            temp_sigma = np.zeros((num_of_studies*num_of_studies))
+            temp_sigma = np.zeros((self.num_of_studies, self.num_of_studies))
             temp_sigma[i][i] = 1
 
             temp_sigma = kron(temp_sigma, M_SIGMA[i])
             BIG_SIGMA = BIG_SIGMA + temp_sigma
 
-        self.post = MPostCal(BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,num_of_studies)
+        self.post = MPostCal(BIG_SIGMA, self.S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,self.num_of_studies)
 
     def run(self):
-        (self.post).findOptimalSetGreedy(self.S_MATRIX, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
+        (self.post).findOptimalSetGreedy(self.S_LONG_VEC, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
 
     def finishUp(self):
         #print the causal set
@@ -143,4 +143,3 @@ class MCaviarModel():
         (self.post).printPost2File(fileName)
 
         name = self.O_fn + "_hist.txt"
-        (self.post).printHist2File(name)
