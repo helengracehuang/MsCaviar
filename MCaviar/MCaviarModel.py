@@ -27,24 +27,24 @@ def swap(matrix, arr1, arr2, pos1, pos2):
 
 def Msort(index, arr1, arr2, matrix):
     #names
-    temp_arr1 = np.array([])
+    temp_arr1 = np.zeros(len(index))
     #zscre
-    temp_arr2 = np.array([])
+    temp_arr2 = np.zeros(len(index))
     #LD mat
-    temp_mat1 = np.array([])
-    temp_mat2 = np.array([])
+    temp_mat1 = np.ndarray(shape = (len(index),len(index)))
+    temp_mat2 = np.ndarray(shape = (len(index),len(index)))
 
     for i in range(len(index)):
-        np.append(temp_arr1,arr1[index[i]])
-        np.append(temp_arr2,arr2[index[i]])
+        temp_arr1[i]= arr1[index[i]]
+        temp_arr2[i] = arr2[index[i]]
         #get row
-        np.append(temp_mat1,matrix[index[i]])
-    
+        temp_mat1[i] = mat[index[i]]
+    temp_mat1 = temp_mat1.transpose()
+
     #get column as the rows, then transpose the matrix    
     for i in range(len(index)):
-        np.append(temp_mat2, temp_mat1[:,index[i]])
-
-    temp_mat2.transpose()
+        temp_mat2[i] = temp_mat1[index[i]]
+    temp_mat2 = temp_mat2.transpose()
 
     return temp_arr1, temp_arr2, temp_mat2
 
