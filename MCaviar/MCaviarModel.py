@@ -27,7 +27,7 @@ def swap(matrix, arr1, arr2, pos1, pos2):
 
 def Msort(index, arr1, arr2, matrix):
     #names
-    temp_arr1 = np.empty(len(index), dtype=str)
+    temp_arr1 = np.empty(len(index), dtype='object') # use object instead of 'str' to have arbitrary length
     #zscre
     temp_arr2 = np.zeros(len(index))
     #LD mat
@@ -54,7 +54,6 @@ def find_intersection(snp_name):
     intersect = set(snp_name[0])
     for i in range(1,len(snp_name)):
         intersect = intersect.intersection(set(snp_name[i]))
-    print("intersect:", intersect)
     return list(intersect)
 
 class MCaviarModel():
@@ -84,12 +83,11 @@ class MCaviarModel():
         for i in range(len(SNP_NAME)):
             index = SNP_NAME[i].argsort()
             SNP_NAME[i], S_VECTOR[i], M_SIGMA[i] = Msort(index, SNP_NAME[i], S_VECTOR[i], M_SIGMA[i])
-
         #snpCount = the number of SNPs available in ALL Studies. For studies with diffrent number of SNPs, we only get the ones
         #that are in all the studies. snpCount = len(file with smallest number of SNPs)
         snpCount = len(SNP_NAME[0])
-        self.pcausalSet = np.zeros((snpCount,snpCount))
-        self.rank = np.zeros((snpCount,snpCount), dtype = int)
+        self.pcausalSet = np.zeros(snpCount)
+        self.rank = np.zeros(snpCount, dtype = int)
 
         for i in range(len(S_VECTOR)):
             for j in range(len(S_VECTOR[i])):
@@ -134,9 +132,10 @@ class MCaviarModel():
     def finishUp(self):
         #print the causal set
         f = open(self.O_fn + "_set.txt",'w')
+        # self.SNP_NAME = (self.SNP_NAME).transpose()
         for i in range(len(self.pcausalSet)):
             if self.pcausalSet[i] == 1:
-                f.write(self.SNP_NAME[i] + "\n")
+                f.write(self.SNP_NAME[0][i] + "\n")
         f.close()
 
         fileName = self.O_fn + "_post.txt"
