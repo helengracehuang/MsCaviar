@@ -1,6 +1,7 @@
+
 import sys
 import numpy as np 
-import Util
+import MUtil
 from MCaviarModel import MCaviarModel
 from MPostCal import MPostCal
 import argparse
@@ -79,18 +80,22 @@ if __name__ == "__main__":
     LD_fn_list = os.listdir(LD_root)
     Z_fn_list = os.listdir(Z_root)
 
-    LD_fn = [None] * len(LD_fn_list)
-    Z_fn = [None] * len(Z_fn_list)
-    SNP_NAME = [None] * len(Z_fn_list)
+    LD_fn = []
+    Z_fn = []
+    SNP_NAME = []
 
     if(len(LD_fn_list) != len(Z_fn_list)):
         print("Number of files do not match, please try again.")
 
     for i in range(len(LD_fn_list)):
-        LD_fn[i] = read_LD(LD_root + "/" + LD_fn_list[i])
+        if LD_fn_list[i] != ".DS_Store":
+            LD_fn.append(read_LD(LD_root + "/" + LD_fn_list[i]))
 
     for i in range(len(Z_fn_list)):
-        SNP_NAME[i], Z_fn[i] = read_z(Z_root + "/" + Z_fn_list[i])
+        if Z_fn_list[i] != ".DS_Store":
+            temp_SNPNAME, temp_Z = read_z(Z_root + "/" + Z_fn_list[i])
+            SNP_NAME.append(temp_SNPNAME)
+            Z_fn.append(temp_Z)
 
     if args.pho_probability:
         rho_prob = args.pho_probability
@@ -114,5 +119,3 @@ if __name__ == "__main__":
     Mcaviar = MCaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared)
     Mcaviar.run()
     Mcaviar.finishUp()
-
-    
