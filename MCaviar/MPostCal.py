@@ -265,11 +265,6 @@ class MPostCal():
             if data[i] == 1:
                 total_one += 1
 
-        # extend causal set configuration to all studies
-        for i in range(self.num_of_studies):
-            data.extend(data)
-        # print(data)
-
         return total_one
     # end nextBinary()
 
@@ -290,17 +285,25 @@ class MPostCal():
 
         for i in range(self.snpCount):
             configure[i] = 0
+        
+        tempConfigure = []
         for i in range(self.num_of_studies):
-            configure.extend(configure)
+            tempConfigure.extend(configure)
 
         for i in range(total_iteration):
-            tmp_likelihood = self.Likelihood(configure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
+            tmp_likelihood = self.Likelihood(tempConfigure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
             for j in range(self.snpCount):
                 for k in range(self.num_of_studies): # need to add up the posteriors for all studies
-                    self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * configure[j + k * self.snpCount])
+                    self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * tempConfigure[j + k * self.snpCount])
             self.histValues[num] = self.addlogSpace(self.histValues[num], tmp_likelihood)
             num = self.nextBinary(configure, self.snpCount)
+
+            # extend causal set configuration to all studies
+            # TODO: right now it is SUPER slow
+            tempConfigure = []
+            for m in range(self.num_of_studies):
+                tempConfigure.extend(configure)
 
             # progress report
             if i % 1000 == 0:
@@ -387,7 +390,7 @@ class MPostCal():
             total_post = self.addlogSpace(total_post, self.postValues[i])
 
         for i in range(self.snpCount):
-            f.write(str(self.SNP_NAME[i]).ljust(30))
+            f.write(str(self.SNP_NAME[0][i]).ljust(30))
             f.write(str(exp(self.postValues[i] - total_post)).ljust(30))
             f.write(str(exp(self.postValues[i] - self.totalLikeLihoodLOG)).ljust(30))
             f.write("\n")
