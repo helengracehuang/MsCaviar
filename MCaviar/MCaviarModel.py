@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-from numpy import kron
 from MPostCal import MPostCal
 from Util import makePositiveSemiDefinite
 
@@ -123,7 +122,7 @@ class MCaviarModel():
             temp_sigma = kron(temp_sigma, M_SIGMA[i])
             BIG_SIGMA = BIG_SIGMA + temp_sigma
 
-        self.post = MPostCal(BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,num_of_studies)
+        self.post = MPostCal(BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME[0], gamma, t_squared ,num_of_studies)
 
     def run(self):
         (self.post).findOptimalSetGreedy(self.S_MATRIX, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
