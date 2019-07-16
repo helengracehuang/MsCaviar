@@ -1,3 +1,4 @@
+
 import sys
 import numpy as np
 from math import log, sqrt, exp
@@ -15,7 +16,7 @@ class MPostCal():
     #snpCount:total number of variants (SNP) in a locus
     #maxCausalSNP: maximum number of causal variants to consider in a locus
     #totalLikeLihoodLOG: Compute the total log likelihood of all causal status (by likelihood we use prior)
-    def __init__(self, M_SIGMA, S_MATRIX, snpCount, MAX_causal, SNP_NAME, gamma, t_squared, num_of_studies):
+    def __init__(self, BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared, num_of_studies):
         self.M_SIGMA = M_SIGMA
         self.S_MATRIX = S_MATRIX
         self.snpCount = snpCount
@@ -30,14 +31,27 @@ class MPostCal():
 
         #statMatrix is now an m by n matrix, m = number of snps, n = num of studies
         #statMatrix is the z-score matrix
+        self.statMatrix = np.zeros((self.snpCount * self.num_of_studies,1))
+        self.statMatrixtTran = np.zeros((1,self.snpCount * self.num_of_studies))
+        for i in range(self.snpCount * self.num_of_studies):
+            self.statMatrix[i][0] = S_LONG_VEC[i]
+            self.statMatrixtTran[0][i] = S_LONG_VEC[i]
+        """
         self.statMatrix = np.zeros((self.snpCount,self.num_of_studies))
         self.statMatrixtTran = np.zeros((self.num_of_studies,self.snpCount))
         for i in range(self.snpCount):
             for j in range(self.num_of_studies):
                 self.statMatrix[i][j] = S_MATRIX[i][j]
                 self.statMatrixtTran[j][i] = S_MATRIX[i][j]
+        """
 
         #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
+        self.sigmaMatrix = np.empty()
+        self.sigmaMatrix = BIG_SIGMA
+
+        self.sigmaDet = det(self.sigmaMatrix)
+        self.invSigmaMatrix = inv(self.sigmaMatrix)
+        """
         self.sigmaMatrix = []
         self.invSigmaMatrix = []
         self.sigmaDet = []
@@ -49,6 +63,7 @@ class MPostCal():
             self.sigmaMatrix.append(temp_mat)
             self.invSigmaMatrix.append(inv(temp_mat))
             self.sigmaDet.append(det(temp_mat))
+        """
 
     # addition in log space
     def addlogSpace(self,a, b):
@@ -98,14 +113,14 @@ class MPostCal():
         causalCount = 0 # total number of causal snps in current configuration
         causalIndex = [] # list of indices of causal snps in current configuration
 
-        for i in range(self.snpCount):
+        for i in range(self.snpCount * self.num_of_studies):
             causalCount += configure[i]
             if configure[i] == 1:
                 causalIndex.append(i)
 
         if causalCount == 0:
             maxVal = 0
-            for i in range(self.snpCount):
+            for i in range(self.snpCount * self.num_of_studies):
                 if maxVal < abs(stat[i]): # absolute val of z-scores
                     maxVal = stat[i]
 
@@ -150,7 +165,7 @@ class MPostCal():
         matDet = 0
         res = 0
 
-        for i in range(self.snpCount):
+        for i in range(self.snpCount * self.num_of_studies):
             causalCount = causalCount + configure[i]
         if causalCount == 0:
             tmpResultMatrixNM = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
@@ -173,9 +188,9 @@ class MPostCal():
         VU_mat = np.zeros((causalCount * self.num_of_studies, causalCount * self.num_of_studies))
 
         #TODO how to fill U and V
-        for i in range(self.snpCount):
+        for i in range(self.snpCount * self.num_of_studies):
             if configure[i] != 0:
-                for j in range(self.snpCount):
+                for j in range(self.snpCount * self.num_of_studies):
                     U_mat[j][index_C] = self.sigmaMatrix[j][i]
                 V_mat[index_C][i] = NCP
                 index_C = index_C + 1
@@ -266,7 +281,8 @@ class MPostCal():
         sumLikelihood = float(0)
         tmp_Likelihood = float(0)
         total_iteration = 0
-        configure = [None] * self.snpCount
+        configure = [None] * self.snpCount 
+        # configure should be a vector of size mn x 1, but here only m x 1. In nextBinary() it will be extended to mn x 1
 
         for i in range(self.maxCausalSNP+1):
             total_iteration = total_iteration + int(comb(self.snpCount, i))
@@ -275,12 +291,15 @@ class MPostCal():
 
         for i in range(self.snpCount):
             configure[i] = 0
+        for i in range(self.num_of_studies):
+            configure.extend(configure)
 
         for i in range(total_iteration):
             tmp_likelihood = self.Likelihood(configure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
             for j in range(self.snpCount):
-                self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * configure[j])
+                for k in range(self.num_of_studies): # need to add up the posteriors for all studies
+                    self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * configure[j + k * self.snpCount])
             self.histValues[num] = self.addlogSpace(self.histValues[num], tmp_likelihood)
             num = self.nextBinary(configure, self.snpCount)
 
@@ -328,7 +347,7 @@ class MPostCal():
             total_post = self.addlogSpace(total_post, self.postValues[i])
         print("Total Likelihood =", total_post, "  SNP =", self.snpCount)
 
-        # Ouput the posterior to files
+        # Sort the posteriors and output high-ranked SNPs
         items = []
         for i in range(self.snpCount):
             items.append(data(exp(self.postValues[i]-total_post), i, 0))
@@ -373,5 +392,3 @@ class MPostCal():
             f.write(str(exp(self.postValues[i] - total_post)).ljust(30))
             f.write(str(exp(self.postValues[i] - self.totalLikeLihoodLOG)).ljust(30))
             f.write("\n")
-
-        f.close()
