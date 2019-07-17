@@ -17,14 +17,8 @@ def remove(matrix, arr1, arr2, pos):
     del arr2[pos]
     matrix = np.delete(matrix, (pos), axis = 0)
     matrix = np.delete(matrix,(pos), axis = 1)
-'''
-def swap(matrix, arr1, arr2, pos1, pos2):
-    arr1[pos1], arr1[pos2] = arr1[pos2], arr1[pos1]
-    arr2[pos1], arr2[pos2] = arr2[pos2], arr2[pos1]
-    matrix[[pos1,pos2]] = matrix[[pos2,pos1]]
-    matrix[:,[pos1,pos2]] = matrix[:,[pos2,pos1]]
-''' 
 
+# sort SNP_NAME, Z-Score, and LD matrix according to the list of index
 def Msort(index, arr1, arr2, matrix):
     #names
     temp_arr1 = np.empty(len(index), dtype='object') # use object instead of 'str' to have arbitrary length
@@ -70,22 +64,21 @@ class MCaviarModel():
         self.t_squared = t_squared
         self.num_of_studies = len(M_SIGMA)
 
+        # TODO: MIGHT HAVE PROBLEMS WITH studies with different lengths -- remove
+        intersect = find_intersection(self.SNP_NAME)
+        for i in range(len(self.SNP_NAME)):
+            for j in range(len(self.SNP_NAME[i])):
+                if not_find(intersect, self.SNP_NAME[i][j]):
+                    remove(M_SIGMA[i],S_VECTOR[i], self.SNP_NAME[i], j)
 
-        # TODO: MIGHT HAVE PROBLEMS WITH studies with different lengths
-        intersect = find_intersection(SNP_NAME)
-        for i in range(len(SNP_NAME)):
-            for j in range(len(SNP_NAME[i])):
-                if not_find(intersect, SNP_NAME[i][j]):
-                    remove(M_SIGMA[i],S_VECTOR[i], SNP_NAME[i], j)
 
-
-        SNP_NAME = np.asarray(SNP_NAME)
-        for i in range(len(SNP_NAME)):
-            index = SNP_NAME[i].argsort()
-            SNP_NAME[i], S_VECTOR[i], M_SIGMA[i] = Msort(index, SNP_NAME[i], S_VECTOR[i], M_SIGMA[i])
+        self.SNP_NAME = np.asarray(self.SNP_NAME)
+        for i in range(len(self.SNP_NAME)):
+            index = self.SNP_NAME[i].argsort()
+            self.SNP_NAME[i], S_VECTOR[i], M_SIGMA[i] = Msort(index, self.SNP_NAME[i], S_VECTOR[i], M_SIGMA[i])
         #snpCount = the number of SNPs available in ALL Studies. For studies with diffrent number of SNPs, we only get the ones
         #that are in all the studies. snpCount = len(file with smallest number of SNPs)
-        snpCount = len(SNP_NAME[0])
+        snpCount = len(self.SNP_NAME[0])
         self.pcausalSet = np.zeros(snpCount)
         self.rank = np.zeros(snpCount, dtype = int)
 
@@ -99,13 +92,6 @@ class MCaviarModel():
         self.S_LONG_VEC = np.empty((0))
         for i in range(len(self.S_VECTOR)):
             self.S_LONG_VEC = np.append(self.S_LONG_VEC, self.S_VECTOR[i])
-
-        '''
-        S_MATRIX = np.zeros((snpCount, snpCount))
-        for i in range(len(S_VECTOR)):
-            for j in range(len(S_VECTOR[i])):
-                S_MATRIX[j][i] = S_VECTOR[i][j]
-        self.S_MATRIX = S_MATRIX'''
 
         for i in range(self.num_of_studies):
             for j in range(snpCount):
@@ -124,7 +110,7 @@ class MCaviarModel():
             temp_sigma = kron(temp_sigma, M_SIGMA[i])
             BIG_SIGMA = BIG_SIGMA + temp_sigma
 
-        self.post = MPostCal(BIG_SIGMA, self.S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared ,self.num_of_studies)
+        self.post = MPostCal(BIG_SIGMA, self.S_LONG_VEC, snpCount, MAX_causal, self.SNP_NAME, gamma, t_squared ,self.num_of_studies)
 
     def run(self):
         (self.post).findOptimalSetGreedy(self.S_LONG_VEC, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
@@ -132,7 +118,6 @@ class MCaviarModel():
     def finishUp(self):
         #print the causal set
         f = open(self.O_fn + "_set.txt",'w')
-        # self.SNP_NAME = (self.SNP_NAME).transpose()
         for i in range(len(self.pcausalSet)):
             if self.pcausalSet[i] == 1:
                 f.write(self.SNP_NAME[0][i] + "\n")
@@ -142,3 +127,7 @@ class MCaviarModel():
         (self.post).printPost2File(fileName)
 
         name = self.O_fn + "_hist.txt"
+        (self.post).printHist2File(name)
+
+    # end finishUp()
+
