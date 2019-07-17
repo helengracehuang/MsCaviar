@@ -372,7 +372,7 @@ class MPostCal():
     # end findOptimalSetGreedy()
 
 
-    def printPost2File(self, fileName)
+    def printPost2File(self, fileName):
         total_post = float(0)
         f = open(fileName, 'w')
         title1 = "SNP_ID"

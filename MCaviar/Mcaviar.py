@@ -117,7 +117,5 @@ if __name__ == "__main__":
     gamma = 0.01
 
     Mcaviar = MCaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared)
-    print("MCaviarModel constructed")
     Mcaviar.run()
-    print("MCaviar run finished")
     Mcaviar.finishUp()

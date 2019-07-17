@@ -15,8 +15,8 @@ def not_find(arr, str):
 def remove(matrix, arr1, arr2, pos):
     del arr1[pos]
     del arr2[pos]
-    matrix = np.delete(matrix, (pos), axis = 0)
-    matrix = np.delete(matrix,(pos), axis = 1)
+    matrix = np.delete(matrix, pos, axis = 0)
+    matrix = np.delete(matrix, pos, axis = 1)
 
 # sort SNP_NAME, Z-Score, and LD matrix according to the list of index
 def Msort(index, arr1, arr2, matrix):
@@ -33,6 +33,7 @@ def Msort(index, arr1, arr2, matrix):
         temp_arr2[i] = arr2[index[i]]
         #get row
         temp_mat1[i] = matrix[index[i]]
+
     temp_mat1 = temp_mat1.transpose()
 
     #get column as the rows, then transpose the matrix    
@@ -64,12 +65,18 @@ class MCaviarModel():
         self.t_squared = t_squared
         self.num_of_studies = len(M_SIGMA)
 
-        # TODO: MIGHT HAVE PROBLEMS WITH studies with different lengths -- remove
         intersect = find_intersection(self.SNP_NAME)
+        #in case there is difference in the list, remove from the last index so we don't miss any
         for i in range(len(self.SNP_NAME)):
-            for j in range(len(self.SNP_NAME[i])):
+            j = len(SNP_NAME[i]) - 1
+            while(j >= 0):
                 if not_find(intersect, self.SNP_NAME[i][j]):
-                    remove(M_SIGMA[i],S_VECTOR[i], self.SNP_NAME[i], j)
+                    #remove(M_SIGMA[i],S_VECTOR[i], self.SNP_NAME[i], j)
+                    del S_VECTOR[i][j]
+                    del SNP_NAME[i][j]
+                    M_SIGMA[i] = np.delete(M_SIGMA[i], j, axis = 0)
+                    M_SIGMA[i] = np.delete(M_SIGMA[i], j, axis = 1)
+                j = j - 1
 
 
         self.SNP_NAME = np.asarray(self.SNP_NAME)
