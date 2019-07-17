@@ -1,4 +1,3 @@
-
 import sys
 import numpy as np
 from math import log, sqrt, exp
@@ -184,7 +183,6 @@ class MPostCal():
         V_mat = np.zeros((causalCount * self.num_of_studies, self.snpCount * self.num_of_studies))
         VU_mat = np.zeros((causalCount * self.num_of_studies, causalCount * self.num_of_studies))
 
-        #TODO how to fill U and V
         for i in range(self.snpCount * self.num_of_studies):
             if configure[i] != 0:
                 for j in range(self.snpCount * self.num_of_studies):
@@ -298,7 +296,6 @@ class MPostCal():
             num = self.nextBinary(configure, self.snpCount)
 
             # extend causal set configuration to all studies
-            # TODO: right now it is SUPER slow
             tempConfigure = []
             for m in range(self.num_of_studies):
                 tempConfigure.extend(configure)
