@@ -28,40 +28,18 @@ class MPostCal():
         self.t_squared = t_squared
         self.num_of_studies = num_of_studies
 
-        #statMatrix is now an m by n matrix, m = number of snps, n = num of studies
-        #statMatrix is the z-score matrix
+        #statMatrix is now an 1 by mn, m = number of snps, n = num of studies
+        #statMatrix is the z-score super long vector
         self.statMatrix = np.zeros((self.snpCount * self.num_of_studies,1))
         self.statMatrixtTran = np.zeros((1,self.snpCount * self.num_of_studies))
         for i in range(self.snpCount * self.num_of_studies):
             self.statMatrix[i][0] = S_LONG_VEC[i]
             self.statMatrixtTran[0][i] = S_LONG_VEC[i]
-        """
-        self.statMatrix = np.zeros((self.snpCount,self.num_of_studies))
-        self.statMatrixtTran = np.zeros((self.num_of_studies,self.snpCount))
-        for i in range(self.snpCount):
-            for j in range(self.num_of_studies):
-                self.statMatrix[i][j] = S_MATRIX[i][j]
-                self.statMatrixtTran[j][i] = S_MATRIX[i][j]
-        """
 
         #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         self.sigmaMatrix = BIG_SIGMA
-
         self.sigmaDet = det(self.sigmaMatrix)
         self.invSigmaMatrix = inv(self.sigmaMatrix)
-        """
-        self.sigmaMatrix = []
-        self.invSigmaMatrix = []
-        self.sigmaDet = []
-        for i in range(len(M_SIGMA)):
-            temp_mat = np.zeros((self.snpCount,self.snpCount))
-            for j in range(self.snpCount):
-                for k in range(self.snpCount):
-                    self.temp_mat[j][k] = (M_SIGMA[i])[j][k]
-            self.sigmaMatrix.append(temp_mat)
-            self.invSigmaMatrix.append(inv(temp_mat))
-            self.sigmaDet.append(det(temp_mat))
-        """
 
     # addition in log space
     def addlogSpace(self,a, b):
@@ -89,11 +67,9 @@ class MPostCal():
 
         temp1 = np.matmul(ZcenterMean.transpose(),inv(R))
         res1 = np.matmul(temp1, ZcenterMean)
-        # res1 = ZcenterMean^T * inv(R) * ZcenterMean
 
         temp2 = np.matmul(ZcenterMean.transpose(),inv(newR))
         res2 = np.matmul(temp2, ZcenterMean)
-        # res2 = ZcenterMean^T * inv(newR) * ZcenterMean
 
         if len(res1) == 0 or len(res2) == 0:
             return 0
@@ -140,15 +116,15 @@ class MPostCal():
     # end fastLikelihood()
     
     #construct sigma_C by the kronecker product, it is mn by mn
-    def construct_diagC(pcausalSet):
+    def construct_diagC(self, configure):
         #Kronecker product for diagC
         Identity_M = np.identity(self.num_of_studies)
         Matrix_of_1 = np.ones((self.num_of_studies, self.num_of_studies))
         #here we treat sigma_G_Squared as 1 - tau_squared
         temp1 = self.t_squared * Identity_M + (1 - self.t_squared) * Matrix_of_1
-        temp2 = np.zeros(self.snpCount,self.snpCount)
-        for i in range(pcausalSet):
-            if pcausalSet[i] == 1:
+        temp2 = np.zeros((self.snpCount,self.snpCount))
+        for i in range(self.snpCount):
+            if configure[i] == 1:
                 temp2[i][i] = 1
         diagC = kron(temp1, temp2)
         return diagC
@@ -165,19 +141,15 @@ class MPostCal():
             causalCount = causalCount + configure[i]
         if causalCount == 0:
             tmpResultMatrixNM = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
-            tmpResultMatrixNN = np.matmul(tmpResultMatrixNM, self.statMatrix)
+            tmpResultMatrix11 = np.matmul(tmpResultMatrixNM, self.statMatrix)
 
-            #TODO: tmpResult is now n by n, do we add up everything in the matrix?
             res = 0
-            for i in range(len(tmpResultMatrixNN)):
-                for j in range(len(tmpResultMatrixNN[i])):
-                    res = res + tmpResultMatrixNN[i][j]
-            #res = tmpResultMatrix11[0][0]
+            res = tmpResultMatrix11[0][0]
             matDet = self.sigmaDet
             return -res/2-sqrt(abs(matDet))
 
-        #U is mn by kn matrix of rows corresponding to causal SNP in sigmaC
-        #V is kn by mn matrix of corresponding slms of sigma
+        #V is mn by kn matrix of rows corresponding to causal SNP in sigmaC
+        #U is kn by mn matrix of corresponding slms of sigma
         # -> VU is kn by kn
         U_mat = np.zeros((self.snpCount * self.num_of_studies, causalCount * self.num_of_studies))
         V_mat = np.zeros((causalCount * self.num_of_studies, self.snpCount * self.num_of_studies))
@@ -200,7 +172,6 @@ class MPostCal():
         tmp_CC = np.identity(causalCount * self.num_of_studies) + VU_mat
         matDet = det(tmp_CC) * self.sigmaDet
 
-        ###TODO: how are we calculating w.r.t each LD matrix
         temp1 = np.matmul(self.invSigmaMatrix,U_mat)
         temp2 = np.matmul(temp1,pinv(tmp_CC))
         tmp_AA = self.invSigmaMatrix - (np.matmul(temp2,V_mat))
@@ -272,7 +243,7 @@ class MPostCal():
         tmp_Likelihood = float(0)
         total_iteration = 0
         configure = [None] * self.snpCount 
-        # configure should be a vector of size mn x 1, but here only m x 1. In nextBinary() it will be extended to mn x 1
+        # configure should be a vector of size mn x 1, but here only m x 1. Later it will be extended to mn x 1
 
         for i in range(self.maxCausalSNP+1):
             total_iteration = total_iteration + int(comb(self.snpCount, i))
@@ -287,8 +258,14 @@ class MPostCal():
             tempConfigure.extend(configure)
 
         for i in range(total_iteration):
-            tmp_likelihood = self.Likelihood(tempConfigure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
+            tmp_likelihood = self.Likelihood(tempConfigure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma) 
+            
+            print("tmp_likelihood is ", tmp_likelihood)   
+
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
+
+            print("sum_likelihood is ", sumLikelihood)
+
             for j in range(self.snpCount):
                 for k in range(self.num_of_studies): # need to add up the posteriors for all studies
                     self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * tempConfigure[j + k * self.snpCount])
