@@ -114,6 +114,7 @@ class MCaviarModel():
             temp_sigma = np.zeros((self.num_of_studies, self.num_of_studies))
             temp_sigma[i][i] = 1
 
+            #kronecker product gives an mn by mn matrix with the i,i block as the LD matrix for ith study, 0 otherwise
             temp_sigma = kron(temp_sigma, M_SIGMA[i])
             BIG_SIGMA = BIG_SIGMA + temp_sigma
 

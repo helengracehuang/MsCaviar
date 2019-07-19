@@ -143,7 +143,6 @@ class MPostCal():
             tmpResultMatrixNM = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
             tmpResultMatrix11 = np.matmul(tmpResultMatrixNM, self.statMatrix)
 
-            res = 0
             res = tmpResultMatrix11[0][0]
             matDet = self.sigmaDet
             return -res/2-sqrt(abs(matDet))
@@ -259,12 +258,8 @@ class MPostCal():
 
         for i in range(total_iteration):
             tmp_likelihood = self.Likelihood(tempConfigure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma) 
-            
-            print("tmp_likelihood is ", tmp_likelihood)   
 
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
-
-            print("sum_likelihood is ", sumLikelihood)
 
             for j in range(self.snpCount):
                 for k in range(self.num_of_studies): # need to add up the posteriors for all studies
