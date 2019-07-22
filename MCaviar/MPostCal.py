@@ -1,3 +1,4 @@
+
 import sys
 import numpy as np
 from math import log, sqrt, exp
@@ -28,21 +29,43 @@ class MPostCal():
         self.t_squared = t_squared
         self.num_of_studies = num_of_studies
 
-        #statMatrix is now an 1 by mn, m = number of snps, n = num of studies
-        #statMatrix is the z-score super long vector
+        #statMatrix is now an m by n matrix, m = number of snps, n = num of studies
+        #statMatrix is the z-score matrix
         self.statMatrix = np.zeros((self.snpCount * self.num_of_studies,1))
         self.statMatrixtTran = np.zeros((1,self.snpCount * self.num_of_studies))
         for i in range(self.snpCount * self.num_of_studies):
             self.statMatrix[i][0] = S_LONG_VEC[i]
             self.statMatrixtTran[0][i] = S_LONG_VEC[i]
+        """
+        self.statMatrix = np.zeros((self.snpCount,self.num_of_studies))
+        self.statMatrixtTran = np.zeros((self.num_of_studies,self.snpCount))
+        for i in range(self.snpCount):
+            for j in range(self.num_of_studies):
+                self.statMatrix[i][j] = S_MATRIX[i][j]
+                self.statMatrixtTran[j][i] = S_MATRIX[i][j]
+        """
 
         #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         self.sigmaMatrix = BIG_SIGMA
+
         self.sigmaDet = det(self.sigmaMatrix)
         self.invSigmaMatrix = inv(self.sigmaMatrix)
+        """
+        self.sigmaMatrix = []
+        self.invSigmaMatrix = []
+        self.sigmaDet = []
+        for i in range(len(M_SIGMA)):
+            temp_mat = np.zeros((self.snpCount,self.snpCount))
+            for j in range(self.snpCount):
+                for k in range(self.snpCount):
+                    self.temp_mat[j][k] = (M_SIGMA[i])[j][k]
+            self.sigmaMatrix.append(temp_mat)
+            self.invSigmaMatrix.append(inv(temp_mat))
+            self.sigmaDet.append(det(temp_mat))
+        """
 
     # addition in log space
-    def addlogSpace(self,a, b):
+    def addlogSpace(self, a, b):
         if a == 0:
             return b
         if b == 0:
@@ -67,9 +90,11 @@ class MPostCal():
 
         temp1 = np.matmul(ZcenterMean.transpose(),inv(R))
         res1 = np.matmul(temp1, ZcenterMean)
+        # res1 = ZcenterMean^T * inv(R) * ZcenterMean
 
         temp2 = np.matmul(ZcenterMean.transpose(),inv(newR))
         res2 = np.matmul(temp2, ZcenterMean)
+        # res2 = ZcenterMean^T * inv(newR) * ZcenterMean
 
         if len(res1) == 0 or len(res2) == 0:
             return 0
@@ -141,18 +166,26 @@ class MPostCal():
             causalCount = causalCount + configure[i]
         if causalCount == 0:
             tmpResultMatrixNM = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
-            tmpResultMatrix11 = np.matmul(tmpResultMatrixNM, self.statMatrix)
+            tmpResultMatrixNN = np.matmul(tmpResultMatrixNM, self.statMatrix)
 
-            res = tmpResultMatrix11[0][0]
+            #TODO: tmpResult is now n by n, do we add up everything in the matrix?
+            res = 0
+            for i in range(len(tmpResultMatrixNN)):
+                for j in range(len(tmpResultMatrixNN[i])):
+                    res = res + tmpResultMatrixNN[i][j]
+            #res = tmpResultMatrix11[0][0]
             matDet = self.sigmaDet
             return -res/2-sqrt(abs(matDet))
 
         #V is mn by kn matrix of rows corresponding to causal SNP in sigmaC
         #U is kn by mn matrix of corresponding slms of sigma
+        # notice that U and V here are opposite from the U and V defined in the paper
         # -> VU is kn by kn
         U_mat = np.zeros((self.snpCount * self.num_of_studies, causalCount * self.num_of_studies))
         V_mat = np.zeros((causalCount * self.num_of_studies, self.snpCount * self.num_of_studies))
         VU_mat = np.zeros((causalCount * self.num_of_studies, causalCount * self.num_of_studies))
+
+        sigmaC = self.construct_diagC(configure)
 
         for i in range(self.snpCount * self.num_of_studies):
             if configure[i] != 0:
@@ -161,9 +194,11 @@ class MPostCal():
                 V_mat[index_C][i] = NCP
                 index_C = index_C + 1
 
+        # print("U_mat", U_mat)
+        # print("V_mat", V_mat)
+
         #VU is kn by kn
         VU_mat = np.matmul(V_mat,U_mat)
-        #VU_mat = kron(V_mat,U_mat)
         
         #A is mn by mn
         I_AA = np.identity(self.snpCount * self.num_of_studies)
@@ -242,7 +277,7 @@ class MPostCal():
         tmp_Likelihood = float(0)
         total_iteration = 0
         configure = [None] * self.snpCount 
-        # configure should be a vector of size mn x 1, but here only m x 1. Later it will be extended to mn x 1
+        # configure should be a vector of size mn x 1, but here only m x 1. In nextBinary() it will be extended to mn x 1
 
         for i in range(self.maxCausalSNP+1):
             total_iteration = total_iteration + int(comb(self.snpCount, i))
@@ -257,12 +292,11 @@ class MPostCal():
             tempConfigure.extend(configure)
 
         for i in range(total_iteration):
-            tmp_likelihood = self.Likelihood(tempConfigure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma) 
-
+            tmp_likelihood = self.Likelihood(tempConfigure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
-
             for j in range(self.snpCount):
                 for k in range(self.num_of_studies): # need to add up the posteriors for all studies
+                # TODO: can optimize
                     self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * tempConfigure[j + k * self.snpCount])
             self.histValues[num] = self.addlogSpace(self.histValues[num], tmp_likelihood)
             num = self.nextBinary(configure, self.snpCount)
@@ -360,4 +394,3 @@ class MPostCal():
             f.write(str(exp(self.postValues[i] - total_post)).ljust(30))
             f.write(str(exp(self.postValues[i] - self.totalLikeLihoodLOG)).ljust(30))
             f.write("\n")
-            
