@@ -68,6 +68,8 @@ if __name__ == "__main__":
                         help='set pho probability, default is 0.95')
     parser.add_argument('-c', '--causal', required=False, dest='M_causal',
                         help='set the maximum number of causal SNPs, default is 2')
+    parser.add_argument('-s', '--heritability', required=False, dest='Sigma_g_squared',
+                        help='set the heritability (sigma^2) across studies, default is 5.2')
     parser.add_argument('-t', '--heterogeneity', required=False, dest='Tau_squared',
                         help='set the heterogeneity (t^2) across studies, default is 0.2')
 
@@ -97,7 +99,7 @@ if __name__ == "__main__":
             Z_fn.append(temp_Z)
 
     if args.pho_probability:
-        rho_prob = args.pho_probability
+        rho_prob = float(args.pho_probability)
     else:
         rho_prob = 0.95
 
@@ -107,14 +109,19 @@ if __name__ == "__main__":
         MAX_causal = 2
     
     if args.Tau_squared:
-        t_squared = args.Tau_squared
+        t_squared = float(args.Tau_squared)
     else:
         t_squared = 0.2
+
+    if args.Sigma_g_squared:
+        s_squared = float(args.Sigma_g_squared)
+    else:
+        s_squared = 5.2
 
     NCP = 5.2
     histFlag = True
     gamma = 0.01
 
-    Mcaviar = MCaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared)
+    Mcaviar = MCaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared, s_squared)
     Mcaviar.run()
     Mcaviar.finishUp()
