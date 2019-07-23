@@ -16,7 +16,7 @@ class MPostCal():
     #snpCount:total number of variants (SNP) in a locus
     #maxCausalSNP: maximum number of causal variants to consider in a locus
     #totalLikeLihoodLOG: Compute the total log likelihood of all causal status (by likelihood we use prior)
-    def __init__(self, BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared, num_of_studies):
+    def __init__(self, BIG_SIGMA, S_LONG_VEC, snpCount, MAX_causal, SNP_NAME, gamma, t_squared, s_squared, num_of_studies):
         self.M_SIGMA = BIG_SIGMA
         self.S_MATRIX = S_LONG_VEC
         self.snpCount = snpCount
@@ -27,6 +27,7 @@ class MPostCal():
         self.histValues = [0] * (int(MAX_causal)+1)
         self.totalLikeLihoodLOG = 0
         self.t_squared = t_squared
+        self.s_squared = s_squared
         self.num_of_studies = num_of_studies
 
         #statMatrix is now an m by n matrix, m = number of snps, n = num of studies
@@ -71,8 +72,8 @@ class MPostCal():
         if b == 0:
             return a
         base = max(a,b)
-        if base - min(a,b) > 700:
-            return base
+        # if base - min(a,b) > 700:
+        #     return base
         return base + log(1+exp(min(a,b)-base))
     # end addlogSpace()
 
@@ -105,7 +106,6 @@ class MPostCal():
             # '/' becomes '-' after taking log
             # the -ln(2pi)/2 term is cancelled out in the substraction
     # end fracdmvnorm()
-
     
     # compute the log likelihood of a single configuration
     def fastLikelihood(self, configure, stat, NCP):
@@ -134,26 +134,24 @@ class MPostCal():
                 Rcc[i][j] = self.sigmaMatrix[causalIndex[i]][causalIndex[j]]
             Zcc[i][0] = stat[causalIndex[i]]
             #diagC[i][i] = NCP
-        
-        # sqrt(n) is absorbed into diagC
-
+            # sqrt(n) is absorbed into diagC
         return self.fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     # end fastLikelihood()
     
+    # (LambdaC | causal set) ~ (vec[0], diagC)
     #construct sigma_C by the kronecker product, it is mn by mn
     def construct_diagC(self, configure):
         #Kronecker product for diagC
         Identity_M = np.identity(self.num_of_studies)
         Matrix_of_1 = np.ones((self.num_of_studies, self.num_of_studies))
-        #here we treat sigma_G_Squared as 1 - tau_squared
-        temp1 = self.t_squared * Identity_M + (1 - self.t_squared) * Matrix_of_1
+        temp1 = self.t_squared * Identity_M + self.s_squared * Matrix_of_1
         temp2 = np.zeros((self.snpCount,self.snpCount))
         for i in range(self.snpCount):
             if configure[i] == 1:
                 temp2[i][i] = 1
         diagC = kron(temp1, temp2)
         return diagC
-
+    # end construct_diagC()
 
     #here we compute the likelihood by using woodbury
     def Likelihood(self, configure, stat, NCP):
@@ -162,7 +160,7 @@ class MPostCal():
         matDet = 0
         res = 0
 
-        for i in range(self.snpCount * self.num_of_studies):
+        for i in range(self.snpCount):
             causalCount = causalCount + configure[i]
         if causalCount == 0:
             tmpResultMatrixNM = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
@@ -177,37 +175,37 @@ class MPostCal():
             matDet = self.sigmaDet
             return -res/2-sqrt(abs(matDet))
 
-        #V is mn by kn matrix of rows corresponding to causal SNP in sigmaC
-        #U is kn by mn matrix of corresponding slms of sigma
+        # construct Woodbury
         # notice that U and V here are opposite from the U and V defined in the paper
-        # -> VU is kn by kn
-        U_mat = np.zeros((self.snpCount * self.num_of_studies, causalCount * self.num_of_studies))
-        V_mat = np.zeros((causalCount * self.num_of_studies, self.snpCount * self.num_of_studies))
-        VU_mat = np.zeros((causalCount * self.num_of_studies, causalCount * self.num_of_studies))
-
         sigmaC = self.construct_diagC(configure)
 
+        # U is kn by mn matrix of corresponding to causal SNP in sigma
+        # UV = SigmaC * Sigma
+        tran_sigmaMatrix = self.sigmaMatrix.transpose()
+        U_mat = np.empty((0, self.snpCount * self.num_of_studies))
         for i in range(self.snpCount * self.num_of_studies):
-            if configure[i] != 0:
-                for j in range(self.snpCount * self.num_of_studies):
-                    U_mat[j][index_C] = self.sigmaMatrix[j][i]
-                V_mat[index_C][i] = NCP
-                index_C = index_C + 1
+            if configure[i] == 1:
+                U_mat = np.append(U_mat, [tran_sigmaMatrix[i]], axis=0)
+        U_mat = U_mat.transpose()
 
-        # print("U_mat", U_mat)
-        # print("V_mat", V_mat)
+        # V is mn by kn matrix of rows corresponding to causal SNP in sigmaC
+        V_mat = np.empty((0, self.snpCount * self.num_of_studies))
+        for i in range(self.snpCount * self.num_of_studies):
+            if configure[i] == 1:
+                V_mat = np.append(V_mat, [sigmaC[i]], axis=0)
 
         #VU is kn by kn
         VU_mat = np.matmul(V_mat,U_mat)
+        # print("VU_mat", VU_mat)
         
-        #A is mn by mn
+        #A is mn by mn identity
         I_AA = np.identity(self.snpCount * self.num_of_studies)
         #tmp_CC is (I+VU), where I is kn by kn
         tmp_CC = np.identity(causalCount * self.num_of_studies) + VU_mat
         matDet = det(tmp_CC) * self.sigmaDet
 
         temp1 = np.matmul(self.invSigmaMatrix,U_mat)
-        temp2 = np.matmul(temp1,pinv(tmp_CC))
+        temp2 = np.matmul(temp1, pinv(tmp_CC))
         tmp_AA = self.invSigmaMatrix - (np.matmul(temp2,V_mat))
         tmpResultMatrix1N = np.matmul(self.statMatrixtTran,tmp_AA)
         tmpResultMatrix11 = np.matmul(tmpResultMatrix1N, self.statMatrix)
@@ -219,7 +217,7 @@ class MPostCal():
         tmplogDet = log(sqrt(abs(matDet)))
         tmpFinalRes = - res/2 - tmplogDet
         return tmpFinalRes
-
+    # end Likelihood()
     
     # generate a potential configuration of causal set
     # e.g. (0, 0, 1, 1, 0, 1 ...) stands for causal SNP 3, 4, 6 
@@ -294,6 +292,9 @@ class MPostCal():
         for i in range(total_iteration):
             tmp_likelihood = self.Likelihood(tempConfigure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
+            # test print
+            # print("tmp_likelihood:", tmp_likelihood)
+            # print("sumLikelihood:", sumLikelihood)
             for j in range(self.snpCount):
                 for k in range(self.num_of_studies): # need to add up the posteriors for all studies
                 # TODO: can optimize
@@ -343,6 +344,10 @@ class MPostCal():
 
         # Output the total likelihood to the log file
         f = open(outputFileName+"_log.txt", 'w')
+
+        # test print
+        print("log likelihood:", self.totalLikeLihoodLOG)
+
         f.write(str(exp(self.totalLikeLihoodLOG)))
         f.close()
 
