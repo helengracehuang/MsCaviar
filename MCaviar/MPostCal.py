@@ -1,4 +1,3 @@
-
 import sys
 import numpy as np
 from math import log, sqrt, exp
@@ -31,42 +30,24 @@ class MPostCal():
         self.num_of_studies = num_of_studies
 
         #statMatrix is now an m by n matrix, m = number of snps, n = num of studies
-        #statMatrix is the z-score matrix
+        #statMatrix is the z-score matrix of mn*1
         self.statMatrix = np.zeros((self.snpCount * self.num_of_studies,1))
         self.statMatrixtTran = np.zeros((1,self.snpCount * self.num_of_studies))
         for i in range(self.snpCount * self.num_of_studies):
             self.statMatrix[i][0] = S_LONG_VEC[i]
             self.statMatrixtTran[0][i] = S_LONG_VEC[i]
-        """
-        self.statMatrix = np.zeros((self.snpCount,self.num_of_studies))
-        self.statMatrixtTran = np.zeros((self.num_of_studies,self.snpCount))
-        for i in range(self.snpCount):
-            for j in range(self.num_of_studies):
-                self.statMatrix[i][j] = S_MATRIX[i][j]
-                self.statMatrixtTran[j][i] = S_MATRIX[i][j]
-        """
 
         #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         self.sigmaMatrix = BIG_SIGMA
-
         self.sigmaDet = det(self.sigmaMatrix)
         self.invSigmaMatrix = inv(self.sigmaMatrix)
-        """
-        self.sigmaMatrix = []
-        self.invSigmaMatrix = []
-        self.sigmaDet = []
-        for i in range(len(M_SIGMA)):
-            temp_mat = np.zeros((self.snpCount,self.snpCount))
-            for j in range(self.snpCount):
-                for k in range(self.snpCount):
-                    self.temp_mat[j][k] = (M_SIGMA[i])[j][k]
-            self.sigmaMatrix.append(temp_mat)
-            self.invSigmaMatrix.append(inv(temp_mat))
-            self.sigmaDet.append(det(temp_mat))
-        """
 
     # addition in log space
     def addlogSpace(self, a, b):
+        """
+        helper function for computeTotalLikelihood, addition in log space of a+b
+        :return log(a + b)
+        """
         if a == 0:
             return b
         if b == 0:
@@ -77,26 +58,28 @@ class MPostCal():
         return base + log(1+exp(min(a,b)-base))
     # end addlogSpace()
 
-
-    # C ~ N(0, R)
-    # S ~ N(0, R + R * diagC * R)
-    # auxiliary function for fastLikelihood
-    # dmvnorm is the pdf of multivariate normal distribution
-    # dmvnorm(Z, mean=rep(0,nrow(R)), R + R %*% R) / dmvnorm(Z, mean=rep(0, nrow(R)), R))
+    
     def fracdmvnorm(self, Z, mean, R, diagC, NCP):
+        """
+        helper function for fastLikelihood, NOT used for MCaviar
+        C ~ N(0, R)
+        S ~ N(0, R + R * diagC * R)
+        dmvnorm(Z, mean=rep(0,nrow(R)), R + R %*% R) / dmvnorm(Z, mean=rep(0, nrow(R)), R))
+        :return the pdf of multivariate normal distribution
+        """
         temp = np.matmul(R, diagC)
         newR = R + np.matmul(temp,R)
 
         ZcenterMean = Z - mean
 
+        #calculating res1 = ZcenterMean^T * inv(R) * ZcenterMean
         temp1 = np.matmul(ZcenterMean.transpose(),inv(R))
         res1 = np.matmul(temp1, ZcenterMean)
-        # res1 = ZcenterMean^T * inv(R) * ZcenterMean
-
+        
+        #calculating res2 = ZcenterMean^T * inv(newR) * ZcenterMean
         temp2 = np.matmul(ZcenterMean.transpose(),inv(newR))
         res2 = np.matmul(temp2, ZcenterMean)
-        # res2 = ZcenterMean^T * inv(newR) * ZcenterMean
-
+        
         if len(res1) == 0 or len(res2) == 0:
             return 0
         else:
@@ -107,8 +90,13 @@ class MPostCal():
             # the -ln(2pi)/2 term is cancelled out in the substraction
     # end fracdmvnorm()
     
-    # compute the log likelihood of a single configuration
+
     def fastLikelihood(self, configure, stat, NCP):
+        """
+        fastLikelihood used in Caviar for faster calculation, uses k*k matrix.
+        NOT EXTENDED TO MULTISTUDIES, could try to implement later
+        :return the log likelihood of a single configuration
+        """
         causalCount = 0 # total number of causal snps in current configuration
         causalIndex = [] # list of indices of causal snps in current configuration
 
@@ -138,10 +126,12 @@ class MPostCal():
         return self.fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     # end fastLikelihood()
     
-    # (LambdaC | causal set) ~ (vec[0], diagC)
-    #construct sigma_C by the kronecker product, it is mn by mn
     def construct_diagC(self, configure):
-        #Kronecker product for diagC
+        """
+        construct sigma_C by the kronecker product in paper, it is mn by mn. the variance for vec(lambdaC)|vec(C)
+        :param configure the causal status vector of 0 and 1
+        :return diagC is the variance matrix for (lamdaC|C)
+        """
         Identity_M = np.identity(self.num_of_studies)
         Matrix_of_1 = np.ones((self.num_of_studies, self.num_of_studies))
         temp1 = self.t_squared * Identity_M + self.s_squared * Matrix_of_1
@@ -153,8 +143,14 @@ class MPostCal():
         return diagC
     # end construct_diagC()
 
-    #here we compute the likelihood by using woodbury
     def Likelihood(self, configure, stat, NCP):
+        """
+        computer likelihood of each configuration by Woodbury
+        :param configure the causal status vector of 0 and 1
+        :param stat the z-score of each snp
+        :param NCP the non-centrality param, set to higher of 5.2 or the highest z_score of all snps in all studies
+        :return likelihood of the configuration
+        """
         causalCount = 0
         index_C = 0
         matDet = 0
@@ -166,12 +162,7 @@ class MPostCal():
             tmpResultMatrixNM = np.matmul(self.statMatrixtTran, self.invSigmaMatrix)
             tmpResultMatrixNN = np.matmul(tmpResultMatrixNM, self.statMatrix)
 
-            #TODO: tmpResult is now n by n, do we add up everything in the matrix?
-            res = 0
-            for i in range(len(tmpResultMatrixNN)):
-                for j in range(len(tmpResultMatrixNN[i])):
-                    res = res + tmpResultMatrixNN[i][j]
-            #res = tmpResultMatrix11[0][0]
+            res = tmpResultMatrixNN[0][0]
             matDet = self.sigmaDet
             return -res/2-sqrt(abs(matDet))
 
@@ -196,7 +187,6 @@ class MPostCal():
 
         #VU is kn by kn
         VU_mat = np.matmul(V_mat,U_mat)
-        # print("VU_mat", VU_mat)
         
         #A is mn by mn identity
         I_AA = np.identity(self.snpCount * self.num_of_studies)
@@ -219,9 +209,14 @@ class MPostCal():
         return tmpFinalRes
     # end Likelihood()
     
-    # generate a potential configuration of causal set
-    # e.g. (0, 0, 1, 1, 0, 1 ...) stands for causal SNP 3, 4, 6 
     def nextBinary(self, data, size):
+        """
+        generate a potential configuration of causal set for 1 study, will extend in computeTotalLikelihood
+        e.g. (0, 0, 1, 1, 0, 1 ...) stands for causal SNP 3, 4, 6 
+        :param data the last configuration we calculated
+        :param size size of 1 study, the snpCount
+        :return the next causal status vector
+        """
         i = 0
         total_one = 0
         index = size-1
@@ -268,14 +263,20 @@ class MPostCal():
     # end nextBinary()
 
 
-    # compute the total likelihood of all configurations
     def computeTotalLikelihood(self, stat, NCP):
+        """
+        computes the total likelihood of all configurations. generate all possible configurations of the set of snps with nextBinary
+        and calculating the probaility of each configuration. add in log space to get totallikelihood
+        :param stat z-score vector
+        :param NCP non-centrality param
+        :return the total likelihood
+        """
         num = 0
         sumLikelihood = float(0)
         tmp_Likelihood = float(0)
         total_iteration = 0
         configure = [None] * self.snpCount 
-        # configure should be a vector of size mn x 1, but here only m x 1. In nextBinary() it will be extended to mn x 1
+        # configure should be a vector of size mn x 1, will be extended
 
         for i in range(self.maxCausalSNP+1):
             total_iteration = total_iteration + int(comb(self.snpCount, i))
@@ -284,7 +285,7 @@ class MPostCal():
 
         for i in range(self.snpCount):
             configure[i] = 0
-        
+        #extend configure
         tempConfigure = []
         for i in range(self.num_of_studies):
             tempConfigure.extend(configure)
@@ -292,12 +293,9 @@ class MPostCal():
         for i in range(total_iteration):
             tmp_likelihood = self.Likelihood(tempConfigure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
-            # test print
-            # print("tmp_likelihood:", tmp_likelihood)
-            # print("sumLikelihood:", sumLikelihood)
             for j in range(self.snpCount):
                 for k in range(self.num_of_studies): # need to add up the posteriors for all studies
-                # TODO: can optimize
+                    # TODO: can optimize
                     self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * tempConfigure[j + k * self.snpCount])
             self.histValues[num] = self.addlogSpace(self.histValues[num], tmp_likelihood)
             num = self.nextBinary(configure, self.snpCount)
@@ -319,6 +317,7 @@ class MPostCal():
 
 
     def convertConfig2String(self,config, size):
+        #convert each configuration to string
         result = "0"
         for i in range(size):
             if(config[i] == 1):
@@ -327,6 +326,11 @@ class MPostCal():
     # end convertConfig2String()
 
     def printHist2File(self,fileName):
+        """
+        print to the hist file, which is the probability of i number of snps. e.g. max causal snp = 2, returns the probability of
+        there being 0 true causal snp, 1 true causal snp or 2 true causal snps
+        :param fileName the filename of output
+        """
         f = open(fileName, 'w')
         rang = self.maxCausalSNP + 1
         for i in range(rang):
@@ -334,8 +338,17 @@ class MPostCal():
         f.close()
     # end printHist2File()
 
-    # find optimal set using greedy algorithm
     def findOptimalSetGreedy(self, stat, NCP, pcausalSet, rank, inputRho, outputFileName):
+        """
+        find optimal set using greedy algorithm
+        :param stat z_score vector
+        :param NCP non-cantrality param
+        :param pcausalSet vector of 0s of size snpCount
+        :param rank vector of 0s of size snpCount
+        :param inputRho the p-value threshold, usually 0.95
+        :param outputFileName name of output files
+        :return the optimal causal set
+        """
         index = 0
         rho = float(0)
         total_post = float(0)
@@ -344,10 +357,6 @@ class MPostCal():
 
         # Output the total likelihood to the log file
         f = open(outputFileName+"_log.txt", 'w')
-
-        # test print
-        print("log likelihood:", self.totalLikeLihoodLOG)
-
         f.write(str(exp(self.totalLikeLihoodLOG)))
         f.close()
 
@@ -358,7 +367,7 @@ class MPostCal():
         # Sort the posteriors and output high-ranked SNPs
         items = []
         for i in range(self.snpCount):
-            items.append(data(exp(self.postValues[i]-total_post), i, 0))
+            items.append(data(exp(self.postValues[i] - total_post), i, 0))
         items.sort()
 
         for i in range(self.snpCount):
@@ -381,6 +390,9 @@ class MPostCal():
 
 
     def printPost2File(self, fileName):
+        """
+        print to post file
+        """
         total_post = float(0)
         f = open(fileName, 'w')
         title1 = "SNP_ID"

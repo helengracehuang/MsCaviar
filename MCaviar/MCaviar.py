@@ -7,6 +7,11 @@ import argparse
 import os
 
 def read_LD(read_fn):
+    """
+    reads in the LD in a file
+    :param read_fn the name of file to be read
+    :return matrix SIGMA that is the LD matrix
+    """
     f = open(read_fn,'r')
     SIGMA = []
     array = []
@@ -16,8 +21,13 @@ def read_LD(read_fn):
         SIGMA.append(array)
     return SIGMA
 
-#returns 2*n list of [SNP name, association statistics]
+
 def read_z(read_fn):
+    """
+    reads in the snp_names and z_scores in a file
+    :param read_fn the name of file to be read
+    :return 2 n lists of [SNP name], [association statistics]
+    """
     f = open(read_fn, 'r')
     SNP_NAME = []
     S_VECTOR = []
@@ -29,8 +39,17 @@ def read_z(read_fn):
         S_VECTOR.append(array[1])
     return SNP_NAME, S_VECTOR
 
+
 #outputs 4 files
 def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
+    """
+    outputs 4 files, not used in MCaviar
+    :param output_file the name of the output file
+    :param causal_vec the set of causal SNPs
+    :param prob_in_causal the set of probabilities of each snps being causal
+    :param: causal_post the posterior probability of each snp
+    :return no return
+    """
     #print the causal set
     f = open(output_file + "_set",'w')
     for i in range(len(causal_vec)):
@@ -125,3 +144,6 @@ if __name__ == "__main__":
     Mcaviar = MCaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared, s_squared)
     Mcaviar.run()
     Mcaviar.finishUp()
+
+
+    
