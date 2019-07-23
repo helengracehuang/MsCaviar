@@ -53,7 +53,7 @@ def find_intersection(snp_name):
 
 class MCaviarModel():
     #M_SIGMA is a vector of sigma matrices
-    def __init__(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared):
+    def __init__(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared, s_squared):
         self.histFlag = histFlag
         self.M_SIGMA = M_SIGMA
         self.SNP_NAME = SNP_NAME
@@ -63,6 +63,7 @@ class MCaviarModel():
         self.gamma = gamma
         self.O_fn = O_fn
         self.t_squared = t_squared
+        self.s_squared = s_squared
         self.num_of_studies = len(M_SIGMA)
 
         intersect = find_intersection(self.SNP_NAME)
@@ -114,11 +115,10 @@ class MCaviarModel():
             temp_sigma = np.zeros((self.num_of_studies, self.num_of_studies))
             temp_sigma[i][i] = 1
 
-            #kronecker product gives an mn by mn matrix with the i,i block as the LD matrix for ith study, 0 otherwise
             temp_sigma = kron(temp_sigma, M_SIGMA[i])
             BIG_SIGMA = BIG_SIGMA + temp_sigma
 
-        self.post = MPostCal(BIG_SIGMA, self.S_LONG_VEC, snpCount, MAX_causal, self.SNP_NAME, gamma, t_squared ,self.num_of_studies)
+        self.post = MPostCal(BIG_SIGMA, self.S_LONG_VEC, snpCount, MAX_causal, self.SNP_NAME, gamma, t_squared, s_squared, self.num_of_studies)
 
     def run(self):
         (self.post).findOptimalSetGreedy(self.S_LONG_VEC, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)
@@ -139,3 +139,4 @@ class MCaviarModel():
 
     # end finishUp()
 
+    
