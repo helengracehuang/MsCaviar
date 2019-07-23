@@ -93,8 +93,8 @@ class MPostCal():
 
     def fastLikelihood(self, configure, stat, NCP):
         """
-        fastLikelihood used in Caviar for faster calculation, uses k*k matrix.
-        NOT EXTENDED TO MULTISTUDIES, could try to implement later
+        fastLikelihood used in Caviar for faster calculation instead of Woodbury, uses k*k matrix.
+        NOT EXTENDED TO MULTISTUDIES because matrix is no longer diagonal, could try to implement later
         :return the log likelihood of a single configuration
         """
         causalCount = 0 # total number of causal snps in current configuration
@@ -126,6 +126,7 @@ class MPostCal():
         return self.fracdmvnorm(Zcc, mean, Rcc, diagC, NCP)
     # end fastLikelihood()
     
+    
     def construct_diagC(self, configure):
         """
         construct sigma_C by the kronecker product in paper, it is mn by mn. the variance for vec(lambdaC)|vec(C)
@@ -143,9 +144,10 @@ class MPostCal():
         return diagC
     # end construct_diagC()
 
+    
     def Likelihood(self, configure, stat, NCP):
         """
-        computer likelihood of each configuration by Woodbury
+        compute likelihood of each configuration by Woodbury
         :param configure the causal status vector of 0 and 1
         :param stat the z-score of each snp
         :param NCP the non-centrality param, set to higher of 5.2 or the highest z_score of all snps in all studies
@@ -208,6 +210,7 @@ class MPostCal():
         tmpFinalRes = - res/2 - tmplogDet
         return tmpFinalRes
     # end Likelihood()
+    
     
     def nextBinary(self, data, size):
         """
