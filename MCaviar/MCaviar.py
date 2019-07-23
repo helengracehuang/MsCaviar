@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--causal', required=False, dest='M_causal',
                         help='set the maximum number of causal SNPs, default is 2')
     parser.add_argument('-s', '--heritability', required=False, dest='Sigma_g_squared',
-                        help='set the heritability (sigma^2) across studies, default is 5.2')
+                        help='set the heritability (sigma^2) of the trait, default is 5.2')
     parser.add_argument('-t', '--heterogeneity', required=False, dest='Tau_squared',
                         help='set the heterogeneity (t^2) across studies, default is 0.2')
 
