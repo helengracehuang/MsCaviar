@@ -72,6 +72,8 @@ if __name__ == "__main__":
 
     if args.num_studies:
         num_of_studies = int(args.num_studies)
+    else:
+        num_of_studies = 3
 
     if args.NCP_in:
         NCP = int(args.NCP_in)
@@ -84,13 +86,14 @@ if __name__ == "__main__":
         LD[i] = list(map(float, LD[i]))
     snpCount = len(SNP_NAME)
 
-    createFolder('./true_causal/')
+    #createFolder('./true_causal/')
     createFolder('./Z_test/')
     createFolder('./LD_test/')
 
     causal_vec = random.sample(range(snpCount), c)
-    z_path = os.getcwd() + '/true_causal/'
-    s_name = z_path + "true_causal_set.txt"
+    #z_path = os.getcwd() + '/true_causal/'
+    #s_name = z_path + "true_causal_set.txt"
+    s_name = "true_causal_set.txt"
     s = open(s_name,'w')
     for i in range(len(causal_vec)):
         s.write(str(causal_vec[i]))
