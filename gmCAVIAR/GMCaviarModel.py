@@ -75,7 +75,7 @@ def find_intersection(snp_name):
         intersect = intersect.intersection(set(snp_name[i]))
     return list(intersect)
 
-class MCaviarModel():
+class GMCaviarModel():
     #M_SIGMA is a vector of sigma matrices
     def __init__(self, M_SIGMA, SNP_NAME, S_VECTOR, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared, s_squared, heterability_assign):
         self.histFlag = histFlag
@@ -143,7 +143,7 @@ class MCaviarModel():
             temp_sigma = kron(temp_sigma, M_SIGMA[i])
             BIG_SIGMA = BIG_SIGMA + temp_sigma
 
-        self.post = MPostCal(BIG_SIGMA, self.S_LONG_VEC, snpCount, MAX_causal, self.SNP_NAME, gamma, t_squared, s_squared, self.num_of_studies, self.heterability_assign)
+        self.post = GMPostCal(BIG_SIGMA, self.S_LONG_VEC, snpCount, MAX_causal, self.SNP_NAME, gamma, t_squared, s_squared, self.num_of_studies, self.heterability_assign)
 
     def run(self):
         (self.post).findOptimalSetGreedy(self.S_LONG_VEC, self.NCP, self.pcausalSet, self.rank, self.rho_prob, self.O_fn)

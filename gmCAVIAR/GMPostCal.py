@@ -7,7 +7,7 @@ import GMUtil
 from GMUtil import data
 from numpy import kron
 
-class MPostCal():
+class GMPostCal():
     #gamma: the probability of SNP being causal
     #postValues: the posterior value for each SNP being causal
     #sigma: the LD matrix
@@ -142,11 +142,12 @@ class MPostCal():
             if configure[i] == 1:
                 temp2[i][i] = 1
         diagC = kron(temp1, temp2)
+        
         for i in range(len(diagC)):
             for j in range(len(diagC[i])):
                 if i == j and configure[i] == 1:
                     diagC[i][j] += self.heterability_assign[i//self.snpCount][1]
-                elif heterability_assign[i//self.snpCount][0] == heterability_assign[j//self.snpCount][0] and configure[i] == 1 and configure[j] == 1:
+                elif self.heterability_assign[i//self.snpCount][0] == self.heterability_assign[j//self.snpCount][0] and configure[i] == 1 and configure[j] == 1:
                     diagC[i][j] += self.heterability_assign[i//self.snpCount][1]
 
         return diagC

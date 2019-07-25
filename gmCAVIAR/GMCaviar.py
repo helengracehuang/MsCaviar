@@ -1,6 +1,6 @@
 import sys
 import numpy as np 
-import MUtil
+import GMUtil
 from GMCaviarModel import GMCaviarModel
 from GMPostCal import GMPostCal
 import argparse
@@ -45,13 +45,19 @@ def read_group(assignment, group_heterability):
     sigma_assignment = []
     for line in f1:
         line = line.strip()
-        assignment.append(int(line), 0)
+        temp = [int(line),0]
+        sigma_assignment.append(temp)
+
     heterability = []
-    for line in f1:
+    for line in f2:
         line = line.strip()
         heterability.append(float(line))
-    for i in range(len(assignment)):
-        assigment[i][1] = heterability[assigment[i][0]-1]
+
+    for i in range(len(sigma_assignment)):
+        sigma_assignment[i][1] = heterability[sigma_assignment[i][0] - 1]
+    f1.close()
+    f2.close()
+    return sigma_assignment
 
 #outputs 4 files
 def output(output_file, causal_vec, SNP, prob_in_causal, causal_post):
@@ -157,12 +163,17 @@ if __name__ == "__main__":
         group_assignment = args.Assignment
         group_squared = args.Sigma_squared
         heterability_assign = read_group(group_assignment, group_squared)
+    else:
+        heterability_assign = []
+        for i in range(len(LD_fn)):
+            temp = [1,0]
+            heterability_assign.append(temp)
 
     NCP = 5.2
     histFlag = True
     gamma = 0.01
 
-    Mcaviar = MCaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared, s_squared, heterability_assign)
+    Mcaviar = GMCaviarModel(LD_fn, SNP_NAME, Z_fn, O_fn, MAX_causal, NCP, rho_prob, histFlag, gamma, t_squared, s_squared, heterability_assign)
     Mcaviar.run()
     Mcaviar.finishUp()
 
