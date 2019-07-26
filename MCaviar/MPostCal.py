@@ -42,7 +42,7 @@ class MPostCal():
         # add epsilon to SIGMA
         for i in range(len(self.sigmaMatrix)):
             for j in range(len(self.sigmaMatrix)):
-                self.sigmaMatrix[i][j] += np.random.normal(0, 1) * 0.01
+                self.sigmaMatrix[i][j] += np.random.normal(0, 1) * 0.005
         
         self.sigmaDet = det(self.sigmaMatrix)
         self.invSigmaMatrix = inv(self.sigmaMatrix)
@@ -58,8 +58,8 @@ class MPostCal():
         if b == 0:
             return a
         base = max(a,b)
-        # if base - min(a,b) > 700:
-        #     return base
+        if base - min(a,b) > 700:
+            return base
         return base + log(1+exp(min(a,b)-base))
     # end addlogSpace()
 
@@ -383,7 +383,10 @@ class MPostCal():
 
         # Output the total likelihood to the log file
         f = open(outputFileName+"_log.txt", 'w')
-        f.write(str(exp(self.totalLikeLihoodLOG)))
+        try:
+            f.write(str(exp(self.totalLikeLihoodLOG)))
+        except OverflowError:
+            f.write("totalLikelihood is out of range.")
         f.close()
 
         for i in range(self.snpCount):
