@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from math import log, sqrt, exp
-from numpy.linalg import inv, det, pinv
+from numpy.linalg import inv, det, pinv, matrix_rank
 from scipy.special import comb
 import MUtil
 from MUtil import data
@@ -39,6 +39,11 @@ class MPostCal():
 
         #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         self.sigmaMatrix = BIG_SIGMA
+        # add epsilon to SIGMA
+        for i in range(len(self.sigmaMatrix)):
+            for j in range(len(self.sigmaMatrix)):
+                self.sigmaMatrix[i][j] += np.random.normal(0, 1) * 0.01
+        
         self.sigmaDet = det(self.sigmaMatrix)
         self.invSigmaMatrix = inv(self.sigmaMatrix)
 
@@ -172,33 +177,51 @@ class MPostCal():
         # notice that U and V here are opposite from the U and V defined in the paper
         sigmaC = self.construct_diagC(configure)
 
-        # U is kn by mn matrix of corresponding to causal SNP in sigma
-        # UV = SigmaC * Sigma
-        tran_sigmaMatrix = self.sigmaMatrix.transpose()
+        # U is kn by mn matrix of columns corresponding to causal SNP in sigmaC
         U_mat = np.empty((0, self.snpCount * self.num_of_studies))
         for i in range(self.snpCount * self.num_of_studies):
             if configure[i] == 1:
-                U_mat = np.append(U_mat, [tran_sigmaMatrix[i]], axis=0)
-        U_mat = U_mat.transpose()
+                U_mat = np.append(U_mat, [sigmaC[i]], axis=0)
 
-        # V is mn by kn matrix of rows corresponding to causal SNP in sigmaC
+        # V is mn by kn matrix of rows corresponding to causal SNP in sigma
+        # UV = SigmaC * Sigma
+        tran_sigmaMatrix = self.sigmaMatrix.transpose()
         V_mat = np.empty((0, self.snpCount * self.num_of_studies))
         for i in range(self.snpCount * self.num_of_studies):
             if configure[i] == 1:
-                V_mat = np.append(V_mat, [sigmaC[i]], axis=0)
+                V_mat = np.append(V_mat, [tran_sigmaMatrix[i]], axis=0)
+        V_mat = V_mat.transpose()
+
+        '''
+        # U is mn by kn matrix of rows corresponding to causal SNP in sigmaC
+        tran_sigmaC = sigmaC.transpose()
+        U_mat = np.empty((0, self.snpCount * self.num_of_studies))
+        for i in range(self.snpCount * self.num_of_studies):
+            if configure[i] == 1:
+                U_mat = np.append(U_mat, [tran_sigmaC[i]], axis=0)
+        U_mat = U_mat.transpose()
+
+        # V is kn by mn matrix of corresponding to causal SNP in sigma
+        # UV = SigmaC * Sigma
+        V_mat = np.empty((0, self.snpCount * self.num_of_studies))
+        for i in range(self.snpCount * self.num_of_studies):
+            if configure[i] == 1:
+                V_mat = np.append(V_mat, [self.sigmaMatrix[i]], axis=0)
+        '''
 
         #VU is kn by kn
-        VU_mat = np.matmul(V_mat,U_mat)
+        # VU_mat = np.matmul(V_mat, U_mat)
+        UV_mat = np.matmul(U_mat, V_mat)
         
         #A is mn by mn identity
         I_AA = np.identity(self.snpCount * self.num_of_studies)
         #tmp_CC is (I+VU), where I is kn by kn
-        tmp_CC = np.identity(causalCount * self.num_of_studies) + VU_mat
+        tmp_CC = np.identity(causalCount * self.num_of_studies) + UV_mat
         matDet = det(tmp_CC) * self.sigmaDet
 
-        temp1 = np.matmul(self.invSigmaMatrix,U_mat)
+        temp1 = np.matmul(self.invSigmaMatrix,V_mat)
         temp2 = np.matmul(temp1, pinv(tmp_CC))
-        tmp_AA = self.invSigmaMatrix - (np.matmul(temp2,V_mat))
+        tmp_AA = self.invSigmaMatrix - (np.matmul(temp2,U_mat))
         tmpResultMatrix1N = np.matmul(self.statMatrixtTran,tmp_AA)
         tmpResultMatrix11 = np.matmul(tmpResultMatrix1N, self.statMatrix)
         res = tmpResultMatrix11[0][0]
