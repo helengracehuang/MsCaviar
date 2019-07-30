@@ -51,6 +51,7 @@ if __name__ == "__main__":
 
     f = open("concatenated_z_score.txt",'w')
     for i in range(len(concate_z)):
+        f.write(str(i).ljust(20))
         f.write(str(concate_z[i]) + "\n")
     f.close()
     	
