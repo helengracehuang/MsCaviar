@@ -73,7 +73,7 @@ if __name__ == "__main__":
     if args.num_studies:
         num_of_studies = int(args.num_studies)
     else:
-        num_of_studies = 3
+        num_of_studies = 1
 
     if args.NCP_in:
         NCP = int(args.NCP_in)
@@ -103,7 +103,11 @@ if __name__ == "__main__":
         s.write("\n")
     s.close()
 
-    for k in range(num_of_studies):
+    NCP_arr = []
+    NCP_arr.append(3)
+    NCP_arr.append(11)
+
+    for k in range(len(NCP_arr)):
         #C is a vector of 0 and 1's
         #sigmaC is the vector where at causal snp is NCP, 0 else
         NEW_C_VEC = np.zeros(len(SNP_NAME))
@@ -118,12 +122,12 @@ if __name__ == "__main__":
 
         #change NCP
         NCP = np.random.normal(NCP,tau_2)
-        MEAN_VEC = np.matmul(LD, NEW_C_VEC) * NCP
+        MEAN_VEC = np.matmul(LD, NEW_C_VEC) * NCP_arr[k]
 
         NEW_Z_SCORE = np.random.multivariate_normal(MEAN_VEC, LD)
 
         z_path = os.getcwd() + '/Z/'
-        f_name = z_path + 'z_file_' + str(k) + '.txt'
+        f_name = z_path + 'z_file_' + str(NCP_arr[k]) + '.txt'
         f = open(f_name,'w')
         for i in range(snpCount):
             f.write(str(i).ljust(20))
@@ -132,7 +136,7 @@ if __name__ == "__main__":
         f.close()
 
         l_path = os.getcwd() + '/LD/'
-        m_name = l_path + 'ld_file_' + str(k) + '.txt'
+        m_name = l_path + 'ld_file_' + str(NCP_arr[k]) + '.txt'
         m = open(m_name,'w')
         for i in range(snpCount):
             for j in range(snpCount):
