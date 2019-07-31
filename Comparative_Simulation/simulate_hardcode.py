@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--causal', required=False, dest='num_causal',
                         help='set the number of causal SNPs, default is 2')
     parser.add_argument('-t', '--heterogeneity', required=False, dest='Tau_squared',
-                        help='set the heterogeneity (t^2) across studies, default is 0.2')
+                        help='set the heterogeneity (t^2) across studies, default is 0.5')
     parser.add_argument('-n', '--num_of_studies', required=False, dest='num_studies',
                         help='set the number of studies, default is 3')
     parser.add_argument('-m', '--non-centrality parameter', required=False, dest='NCP_in',
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     if args.Tau_squared:
         tau_2 = float(args.Tau_squared)
     else:
-        tau_2 = 0.2
+        tau_2 = 0.5
 
     if args.num_studies:
         num_of_studies = int(args.num_studies)
@@ -90,10 +90,10 @@ if __name__ == "__main__":
     createFolder('./Z/')
     createFolder('./LD/')
 
-    #causal_vec = random.sample(range(snpCount), c)
-    causal_vec = []
-    causal_vec.append(46)
-    causal_vec.append(26)
+    causal_vec = random.sample(range(snpCount), c)
+    #causal_vec = []
+    #causal_vec.append(46)
+    #causal_vec.append(26)
     #z_path = os.getcwd() + '/true_causal/'
     #s_name = z_path + "true_causal_set.txt"
     s_name = "true_causal_set.txt"
@@ -104,8 +104,8 @@ if __name__ == "__main__":
     s.close()
 
     NCP_arr = []
-    NCP_arr.append(3)
     NCP_arr.append(11)
+    NCP_arr.append(17)
 
     for k in range(len(NCP_arr)):
         #C is a vector of 0 and 1's
@@ -143,3 +143,6 @@ if __name__ == "__main__":
                 m.write(str(LD[i][j]) + ' ')
             m.write("\n")
         m.close()
+
+
+

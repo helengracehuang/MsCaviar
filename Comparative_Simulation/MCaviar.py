@@ -90,7 +90,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--heritability', required=False, dest='Sigma_g_squared',
                         help='set the heritability (sigma^2) of the trait, default is 5.2')
     parser.add_argument('-t', '--heterogeneity', required=False, dest='Tau_squared',
-                        help='set the heterogeneity (t^2) across studies, default is 0.2')
+                        help='set the heterogeneity (t^2) across studies, default is 0.5')
 
     
     args = parser.parse_args()
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     if args.Tau_squared:
         t_squared = float(args.Tau_squared)
     else:
-        t_squared = 0.2
+        t_squared = 0.5
 
     if args.Sigma_g_squared:
         s_squared = float(args.Sigma_g_squared)
