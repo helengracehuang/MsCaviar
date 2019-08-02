@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--causal', required=False, dest='num_causal',
                         help='set the number of causal SNPs, default is 2')
     parser.add_argument('-t', '--heterogeneity', required=False, dest='Tau_squared',
-                        help='set the heterogeneity (t^2) across studies, default is 0.2')
+                        help='set the heterogeneity (t^2) across studies, default is 0.5')
     parser.add_argument('-n', '--num_of_studies', required=False, dest='num_studies',
                         help='set the number of studies, default is 3')
     parser.add_argument('-m', '--non-centrality parameter', required=False, dest='NCP_in',
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     if args.Tau_squared:
         tau_2 = float(args.Tau_squared)
     else:
-        tau_2 = 0.2
+        tau_2 = 0.5
 
     if args.num_studies:
         num_of_studies = int(args.num_studies)
@@ -76,9 +76,9 @@ if __name__ == "__main__":
         num_of_studies = 3
 
     if args.NCP_in:
-        NCP = int(args.NCP_in)
+        NCP_mean = int(args.NCP_in)
     else:
-        NCP = 5.2
+        NCP_mean = 5.2
 
     LD = read_LD(LD_fn)
     SNP_NAME, S_VEC = read_z(Z_fn)
@@ -114,7 +114,7 @@ if __name__ == "__main__":
             NEW_C_VEC[causal_vec[i]] = 1
 
         #change NCP
-        NCP = np.random.normal(NCP,tau_2)
+        NCP = np.random.normal(NCP_mean,tau_2)
         MEAN_VEC = np.matmul(LD, NEW_C_VEC) * NCP
 
         NEW_Z_SCORE = np.random.multivariate_normal(MEAN_VEC, LD)
