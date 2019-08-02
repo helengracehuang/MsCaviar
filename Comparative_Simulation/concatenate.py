@@ -48,7 +48,8 @@ if __name__ == "__main__":
     for i in range(snpCount):
         temp_z = 0
         for j in range(len(Z_fn)):
-            temp_z += float(Z_fn[j][i])/sqrt(2)
+            #temp_z += float(Z_fn[j][i])/sqrt(2)
+            temp_z += float(Z_fn[j][i])
         concate_z.append(temp_z)
 
     f = open("concatenated_z_score.txt",'w')

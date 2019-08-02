@@ -162,6 +162,7 @@ class PostCal():
 
         tmplogDet = log(sqrt(abs(matDet)))
         tmpFinalRes = - res/2 - tmplogDet
+
         '''if tmpFinalRes > 700:
             return exp(700)'''
         #print(tmpFinalRes)
@@ -234,7 +235,7 @@ class PostCal():
             configure[i] = 0
 
         for i in range(total_iteration):
-            tmp_likelihood = self.fastLikelihood(configure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
+            tmp_likelihood = self.Likelihood(configure, stat, NCP) + num * log(self.gamma) + (self.snpCount-num) * log(1-self.gamma)    
             sumLikelihood = self.addlogSpace(sumLikelihood, tmp_likelihood)
             for j in range(self.snpCount):
                 self.postValues[j] = self.addlogSpace(self.postValues[j], tmp_likelihood * configure[j])
@@ -278,7 +279,10 @@ class PostCal():
 
         # Output the total likelihood to the log file
         f = open(outputFileName+"_log.txt", 'w')
-        f.write(str(exp(self.totalLikeLihoodLOG)))
+        try:
+            f.write(str(exp(self.totalLikeLihoodLOG)))
+        except OverflowError:
+            f.write("totalLikelihood is out of range.")
         f.close()
 
         for i in range(self.snpCount):

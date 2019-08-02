@@ -40,9 +40,9 @@ class MPostCal():
         #sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         self.sigmaMatrix = BIG_SIGMA
         # add epsilon to SIGMA
-        for i in range(len(self.sigmaMatrix)):
-            for j in range(len(self.sigmaMatrix)):
-                self.sigmaMatrix[i][j] += np.random.normal(0, 1) * 0.005
+        #for i in range(len(self.sigmaMatrix)):
+            #for j in range(len(self.sigmaMatrix)):
+                #self.sigmaMatrix[i][j] += np.random.normal(0, 1) * 0.005
         
         self.sigmaDet = det(self.sigmaMatrix)
         self.invSigmaMatrix = inv(self.sigmaMatrix)
@@ -212,7 +212,6 @@ class MPostCal():
         #VU is kn by kn
         # VU_mat = np.matmul(V_mat, U_mat)
         UV_mat = np.matmul(U_mat, V_mat)
-        
         #A is mn by mn identity
         I_AA = np.identity(self.snpCount * self.num_of_studies)
         #tmp_CC is (I+VU), where I is kn by kn
@@ -231,6 +230,7 @@ class MPostCal():
             return 0
         tmplogDet = log(sqrt(abs(matDet)))
         tmpFinalRes = - res/2 - tmplogDet
+        
         return tmpFinalRes
     # end Likelihood()
     

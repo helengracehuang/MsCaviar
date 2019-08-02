@@ -128,6 +128,7 @@ class MCaviarModel():
             for j in range(snpCount):
                 if(abs(float(self.S_LONG_VEC[i*snpCount + j]) > NCP)):
                     NCP = abs(float(self.S_LONG_VEC[i*snpCount + j]))
+        print("NCP is ", NCP)
 
         for i in range(len(M_SIGMA)):
             makePositiveSemiDefinite(M_SIGMA[i],snpCount)

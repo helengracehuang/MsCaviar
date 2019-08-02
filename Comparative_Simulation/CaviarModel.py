@@ -26,6 +26,7 @@ class CaviarModel():
         for i in range(snpCount):
             if(abs(float(S_VECTOR[i]) > NCP)):
                 NCP = abs(float(S_VECTOR[i]))
+        print("NCP for original CAV is ", NCP)
 
         self.post = PostCal(M_SIGMA, S_VECTOR, snpCount, MAX_causal, SNP_NAME, gamma)
 
