@@ -14,55 +14,64 @@
 #include <sstream>
 #include <vector>
 #include <cmath>
+#include <tuple>
 
 using namespace std;
 
-void read_LD(string fileName, int* vector) {
-    int index = 0;
+vector<double> read_LD(string fileName) {
+    vector<double> vect;
     double data = 0;
     ifstream fin(fileName.c_str(), ifstream::in);
     while(fin.good()) {
         fin >> data;
-        vector[index] = (int)data;
-        index++;
+        vect.push_back(data);
     }
     fin.close();
+    return vect;
 }
 
-void read_SNP_NAME(string fileName, string* list, int ignore=0){
-    int index = 0;
+vector<string> read_SNP_NAME(string fileName, int ignore=0){
     string data = "";
     string line = "";
     ifstream fin(fileName.c_str(), ifstream::in);
+    vector<string> name;
     
     for(int i = 0; i < ignore; i++){
-        getline(fin,line);}
-        
-    while(getline(fin,line)){
+        getline(fin, line);
+    }
+    while(getline(fin, line)){
         istringstream iss(line);
         iss >> data;
-        list[index] = data;
-        index++;
+        name.push_back(data);
     }
     fin.close();
+    return name;
 }
 
-void read_Z_SCORE(string fileName, double* vector){
-    int index = 0;
+vector<double> read_Z(string fileName){
     string line = "";
     string dataS = "";
     double data = 0.0;
     ifstream fin(fileName.c_str(), ifstream::in);
+    vector<double> z;
     
     while(getline(fin,line)){
         istringstream iss(line);
         iss >> dataS;
         iss >> data;
-        vector[index] = (double)data;
-        index++;
+        z.push_back((double)data);
     }
     fin.close();
+    return z;
 }
+
+/*
+tuple<int, double> read_group(string assignment, string group_heterability){
+    tuple<int, double> group_heteral;
+    //TODO
+    return group_heteral;
+}
+*/
 
 int main (int argc, char *argv[]) {
     int totalCausalSNP = 2;
@@ -131,8 +140,13 @@ int main (int argc, char *argv[]) {
         }
     }
     
-    GMCaviarModel GMcaviar(ldFile, zFile, outputFileName, totalCausalSNP, NCP, rho, histFlag, gamma, tau_sqr, sigma_g_squared);
+    vector<double> LD = read_LD(ldFile);
+    vector<string> SNP_name = read_SNP_NAME(zFile);
+    vector<double> z_score = read_Z(zFile);
+    
+    GMCaviarModel GMcaviar(LD, SNP_name, z_score, outputFileName, totalCausalSNP, NCP, rho, histFlag, gamma, tau_sqr, sigma_g_squared);
     GMcaviar.run();
     GMcaviar.finishUp();
+    
     return 0;
 }

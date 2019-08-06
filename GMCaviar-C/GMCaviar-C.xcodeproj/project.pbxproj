@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		DEA2770322F38FF9003910AD /* GMUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEA2770222F38FF8003910AD /* GMUtil.cpp */; };
 		DEA2770622F3901D003910AD /* GMPostCal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEA2770522F3901D003910AD /* GMPostCal.cpp */; };
-		DEA2770A22F39043003910AD /* GMCaviarModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEA2770922F39043003910AD /* GMCaviarModel.cpp */; };
 		DEA2770C22F39053003910AD /* GMCaviar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEA2770B22F39053003910AD /* GMCaviar.cpp */; };
 /* End PBXBuildFile section */
 
@@ -32,7 +31,6 @@
 		DEA2770522F3901D003910AD /* GMPostCal.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GMPostCal.cpp; sourceTree = "<group>"; };
 		DEA2770722F39027003910AD /* GMPostCal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GMPostCal.h; sourceTree = "<group>"; };
 		DEA2770822F39036003910AD /* GMCaviarModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GMCaviarModel.h; sourceTree = "<group>"; };
-		DEA2770922F39043003910AD /* GMCaviarModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GMCaviarModel.cpp; sourceTree = "<group>"; };
 		DEA2770B22F39053003910AD /* GMCaviar.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GMCaviar.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -68,7 +66,6 @@
 			children = (
 				DEA2770B22F39053003910AD /* GMCaviar.cpp */,
 				DEA2770822F39036003910AD /* GMCaviarModel.h */,
-				DEA2770922F39043003910AD /* GMCaviarModel.cpp */,
 				DEA2770722F39027003910AD /* GMPostCal.h */,
 				DEA2770522F3901D003910AD /* GMPostCal.cpp */,
 				DEA2770422F39005003910AD /* GMUtil.h */,
@@ -135,7 +132,6 @@
 			files = (
 				DEA2770622F3901D003910AD /* GMPostCal.cpp in Sources */,
 				DEA2770C22F39053003910AD /* GMCaviar.cpp in Sources */,
-				DEA2770A22F39043003910AD /* GMCaviarModel.cpp in Sources */,
 				DEA2770322F38FF9003910AD /* GMUtil.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
