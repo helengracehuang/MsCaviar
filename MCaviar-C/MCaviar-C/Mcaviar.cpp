@@ -36,8 +36,8 @@ int main( int argc, char *argv[]  ){
                 cout << "Options: " << endl;
                 cout << "-h, --help                 show this help message and exit " << endl;
                 cout << "-o OUTFILE, --out=OUTFILE  specify the output file" << endl;
-                cout << "-l LDDir, --ld_file=LDFILE    the ld input files folder directory" << endl;
-                cout << "-z ZDir, --z_file=ZFILE   the z-score and rsID files folder directory" << endl;
+                cout << "-l LDFile, --ld_file=LDFILE    the ld input files folder directory" << endl;
+                cout << "-z ZFile, --z_file=ZFILE   the z-score and rsID files folder directory" << endl;
                 cout << "-r RHO, --rho-prob=RHO     set $pho$ probability (default 0.95)" << endl;
                 cout << "-g GAMMA, --gamma      set $gamma$ the prior of a SNP being causal (default 0.01)" << endl;
                 cout << "-c causal          set the maximum number of causal SNPs" << endl;
@@ -47,13 +47,13 @@ int main( int argc, char *argv[]  ){
 
                 exit(0);
             case 'l':
-                ldDir = string(optarg);
+                ldFile = string(optarg);
                 break;
             case 'o':
                 outputFileName = string(optarg);
                 break;
             case 'z':
-                zDir = string(optarg);
+                zFile = string(optarg);
                 break;
             case 'r':
                 rho = atof(optarg);
@@ -68,9 +68,9 @@ int main( int argc, char *argv[]  ){
                 histFlag = true;
                 break;
             case 't':
-                tau_sqr = atof(optarg)
+                tau_sqr = atof(optarg);
             case 's':
-                sigma_g_squared = atof(optarg)
+                sigma_g_squared = atof(optarg);
 
             case ':':
             case '?':

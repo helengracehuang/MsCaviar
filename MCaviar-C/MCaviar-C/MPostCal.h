@@ -60,11 +60,11 @@ public:
         this-> snpCount = snpCount;
         this-> maxCausalSNP = MAX_causal;
         this-> postValues = new double [snpCount];
-            for(int i = 0; i < snpCount; i++)
-                this->postValues[i] = 0;
+        for(int i = 0; i < snpCount; i++)
+            this->postValues[i] = 0;
         this-> histValues = new double [MAX_causal+1];
-            for(int i= 0; i <= maxCausalSNP;i++)
-                this->histValues[i] = 0;
+        for(int i= 0; i <= maxCausalSNP;i++)
+            this->histValues[i] = 0;
         this-> totalLikeLihoodLOG = 0;
         this-> t_squared = t_squared;
         this-> s_squared = s_squared;
@@ -74,10 +74,10 @@ public:
         // statMatrix is the z-score matrix of mn*1
         statMatrix = mat (snpCount * num_of_studies, 1);
         statMatrixtTran = mat (1, snpCount * num_of_studies);
-            for(int i = 0; i < snpCount * num_of_studies; i++) {
-                statMatrix(i,0) = stat[i];
-                statMatrixtTran(0,i) = stat[i];
-            }
+        for(int i = 0; i < snpCount * num_of_studies; i++) {
+            statMatrix(i,0) = stat[i];
+            statMatrixtTran(0,i) = stat[i];
+        }
         // sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         sigmaMatrix = mat (snpCount * num_of_studies, snpCount * num_of_studies);
         std::default_random_engine generator;
