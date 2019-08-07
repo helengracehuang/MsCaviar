@@ -10,6 +10,7 @@
 #include <math.h>
 #include <string.h>
 #include <vector>
+#include <random>
 
 #include <armadillo>
 
@@ -17,110 +18,115 @@ using namespace std;
 using namespace arma;
 
 void printGSLPrint(mat A, int row, int col);
- 
+
 class MPostCal{
-
+    
 private:
-	
-	double gamma;		// the probability of SNP being causal
-	double * postValues;	//the posterior value for each SNP being causal
-	double * sigma;		//the LD matrix
-	double * histValues;	//the probability of the number of causal SNPs, we make the histogram of the causal SNPs
-	int snpCount;		//total number of variants (SNP) in a locus
-	int maxCausalSNP;	//maximum number of causal variants to consider in a locus
-	double sigmaDet;	//determinie of matrix
-
-	double totalLikeLihoodLOG; //Compute the total log likelihood of all causal status (by likelihood we use prior)
-
-	mat sigmaMatrix;
-	mat invSigmaMatrix;
-	mat statMatrix;
+    
+    double gamma;        // the probability of SNP being causal
+    double * postValues;    //the posterior value for each SNP being causal
+    double * histValues;    //the probability of the number of causal SNPs, we make the histogram of the causal SNPs
+    int snpCount;        //total number of variants (SNP) in a locus
+    int maxCausalSNP;    //maximum number of causal variants to consider in a locus
+    double sigmaDet;    //determinant of matrix
+    
+    double totalLikeLihoodLOG; //Compute the total log likelihood of all causal status (by likelihood we use prior)
+    double t_squared;    //tau^2 (heterogeneity)
+    double s_squared;    //sigma_g^2 (heritability)
+    int num_of_studies;
+    
+    mat sigmaMatrix;
+    mat invSigmaMatrix;
+    mat statMatrix;
     mat statMatrixtTran;
-	string * snpNames;
-
-	double addlogSpace(double a, double b) {
-		if (a == 0)
-			return b;
-		if (b == 0)
-			return a;
-		double base = max(a,b);
-		if (base - min(a,b) > 700)
-			return base;
-		return(base + log(1+exp(min(a,b)-base)));
-	}
-
+    vector<string> * SNP_NAME;
+    
+    double addlogSpace(double a, double b) {
+        if (a == 0)
+            return b;
+        if (b == 0)
+            return a;
+        double base = max(a,b);
+        if (base - min(a,b) > 700)
+            return base;
+        return(base + log(1+exp(min(a,b)-base)));
+    }
+    
 public:
-
-	MPostCal(double * sigma, double * stat, int snpCount, int maxCausalSNP, string * snpNames, double gamma) {
-		this->gamma = gamma;
-		this->snpNames = snpNames;
-		this-> snpCount = snpCount;
-		this-> maxCausalSNP = maxCausalSNP;
-                this->sigma = new double[snpCount * snpCount];
-		this-> postValues = new double [snpCount];
-		this-> histValues = new double [maxCausalSNP+1];              
-	
-		statMatrix                 = mat (snpCount, 1);
-		statMatrixtTran            = mat (1, snpCount);
-		sigmaMatrix         	   = mat (snpCount, snpCount);
-	
-		for(int i = 0; i < snpCount*snpCount; i++)
-			this->sigma[i] = sigma[i];
-		for(int i = 0; i < snpCount; i++)
-                        this->postValues[i] = 0;
-		for(int i= 0; i <= maxCausalSNP;i++)
-			this->histValues[i] = 0;
-		for(int i = 0; i < snpCount; i++) {
-                	statMatrix(i,0) = stat[i];
-        	        statMatrixtTran(0,i) = stat[i];
-	        }
-		
-		for(int i = 0; i < snpCount; i++) {
-                	for (int j = 0; j < snpCount; j++)
-                       		sigmaMatrix(i,j) = sigma[i*snpCount+j];
-       		}
-		//invSigmaMatrix is depricated and the value for it is not right
-		//PLASE DO NOT USE THE invSigmaMatrix;
-		invSigmaMatrix = sigmaMatrix;
-		sigmaDet       = det(sigmaMatrix);
-	
-	}
-        ~MPostCal() {
-		delete [] histValues;
-		delete [] postValues;
-        delete [] sigma;
-	}
-
-	bool validConfigutation(int * configure, char * pcausalSet);
-	void computeALLCausalSetConfiguration(double * stat, double NCP, char * pcausalSet, string outputFileName);
-
-
-	double dmvnorm(mat Z, mat mean, mat R);
-    double fracdmvnorm(mat Z, mat mean, mat R, mat diagC, double NCP);
-	double fracdmvnorm2(mat Z, mat mean, mat R, mat diagC, double NCP);
-
-
-    double fastLikelihood(int * configure, double * stat, double NCP);
-	double likelihood(int * configure, double * stat, double NCP) ;
-	int nextBinary(int * data, int size) ;
-	double computeTotalLikelihood(double * stat, double NCP) ;	
-	double findOptimalSetGreedy(double * stat, double NCP, char * pcausalSet, int *rank,  double inputRho, string outputFileName);
-	string convertConfig2String(int * config, int size);
-	void printHist2File(string fileName) {
-		exportVector2File(fileName, histValues, maxCausalSNP+1);
-	}
-
-	void printPost2File(string fileName) {
-		double total_post = 0;
-		ofstream outfile(fileName.c_str(), ios::out );	
-		for(int i = 0; i < snpCount; i++)
-                	total_post = addlogSpace(total_post, postValues[i]);
-		outfile << "SNP_ID\tProb_in_pCausalSet\tCausal_Post._Prob." << endl; 
-		for(int i = 0; i < snpCount; i++) {
-			outfile << snpNames[i] << "\t" << exp(postValues[i]-total_post) << "\t" << exp(postValues[i]-totalLikeLihoodLOG) << endl;
-		}
-	}
-
+    
+    MPostCal(mat * BIG_SIGMA, vector<double> * S_LONG_VEC, int snpCount, int MAX_causal, vector<string> * SNP_NAME, double gamma, double t_squared, double s_squared, int num_of_studies) {
+        this->gamma = gamma;
+        this->SNP_NAME = SNP_NAME;
+        this-> snpCount = snpCount;
+        this-> maxCausalSNP = MAX_causal;
+        this-> postValues = new double [snpCount];
+            for(int i = 0; i < snpCount; i++)
+                this->postValues[i] = 0;
+        this-> histValues = new double [MAX_causal+1];
+            for(int i= 0; i <= maxCausalSNP;i++)
+                this->histValues[i] = 0;
+        this-> totalLikeLihoodLOG = 0;
+        this-> t_squared = t_squared;
+        this-> s_squared = s_squared;
+        this-> num_of_studies = num_of_studies;
+        
+        // statMatrix is now an m by n matrix, m = number of snps, n = num of studies
+        // statMatrix is the z-score matrix of mn*1
+        statMatrix = mat (snpCount * num_of_studies, 1);
+        statMatrixtTran = mat (1, snpCount * num_of_studies);
+            for(int i = 0; i < snpCount * num_of_studies; i++) {
+                statMatrix(i,0) = stat[i];
+                statMatrixtTran(0,i) = stat[i];
+            }
+        // sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
+        sigmaMatrix = mat (snpCount * num_of_studies, snpCount * num_of_studies);
+        std::default_random_engine generator;
+        std::normal_distribution<double> distribution(0, 1);
+        for(int i = 0; i < snpCount * num_of_studies; i++) {
+            for (int j = 0; j < snpCount * num_of_studies; j++)
+                sigmaMatrix(i,j) = BIG_SIGMA(i,j) + distribution(generator) * 0.005; // add epsilon to SIGMA
+        }
+        invSigmaMatrix = inv(sigmaMatrix);
+        sigmaDet       = det(sigmaMatrix);
+        
+    }
+    
+    ~MPostCal() {
+        delete [] histValues;
+        delete [] postValues;
+    }
+    
+    bool validConfigutation(int * configure, char * pcausalSet);
+    void computeALLCausalSetConfiguration(double * stat, double NCP, char * pcausalSet, string outputFileName);
+    
+    
+    // double dmvnorm(mat Z, mat mean, mat R);
+    // double fracdmvnorm(mat Z, mat mean, mat R, mat diagC, double NCP);
+    // double fracdmvnorm2(mat Z, mat mean, mat R, mat diagC, double NCP);
+    
+    
+    // double fastLikelihood(int * configure, double * stat, double NCP);
+    mat* construct_diagC(int * configure);
+    double likelihood(int * configure, double * stat, double NCP) ;
+    int nextBinary(int * data, int size) ;
+    double computeTotalLikelihood(double * stat, double NCP) ;
+    double findOptimalSetGreedy(double * stat, double NCP, char * pcausalSet, int *rank,  double inputRho, string outputFileName);
+    string convertConfig2String(int * config, int size);
+    void printHist2File(string fileName) {
+        exportVector2File(fileName, histValues, maxCausalSNP+1);
+    }
+    
+    void printPost2File(string fileName) {
+        double total_post = 0;
+        ofstream outfile(fileName.c_str(), ios::out );
+        for(int i = 0; i < snpCount; i++)
+            total_post = addlogSpace(total_post, postValues[i]);
+        outfile << "SNP_ID\tProb_in_pCausalSet\tCausal_Post._Prob." << endl;
+        for(int i = 0; i < snpCount; i++) {
+            outfile << snpNames[i] << "\t" << exp(postValues[i]-total_post) << "\t" << exp(postValues[i]-totalLikeLihoodLOG) << endl;
+        }
+    }
+    
 };
- 
+
 #endif
