@@ -3,7 +3,7 @@
 #include <string>
 #include <cmath>
 #include <math.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <vector>
 
 #include "MUtil.h"
@@ -19,15 +19,15 @@ int main( int argc, char *argv[]  ){
     double gamma = 0.01;
     double rho = 0.95;
     bool histFlag = false;
-    int oc = 0; 
+    int oc = 0;
     double tau_sqr = 0.2;
     double sigma_g_squared = 5.2;
-
+    
     string ldFile = "";
     string zFile  = "";
     string outputFileName = "";
-    string geneMapFile = "";    
-
+    string geneMapFile = "";
+    
     while ((oc = getopt(argc, argv, "vhl:o:z:g:r:c:f:")) != -1) {
         switch (oc) {
             case 'v':
@@ -44,7 +44,7 @@ int main( int argc, char *argv[]  ){
                 cout << "-f 1               to out the probaility of different number of causal SNP" << endl;
                 cout << "-t TAU_SQR, --tau_sqr=TAU_SQR  set the heterogeneity (t^2) across studies, default is 0.2" << endl;
                 cout << "-s SIGMA_G_SQR, --sigma_g_squared=SIGMA_G_SQR    set the heritability (sigma^2) of the trait, default is 5.2" << endl;
-
+                
                 exit(0);
             case 'l':
                 ldFile = string(optarg);
@@ -71,7 +71,7 @@ int main( int argc, char *argv[]  ){
                 tau_sqr = atof(optarg);
             case 's':
                 sigma_g_squared = atof(optarg);
-
+                
             case ':':
             case '?':
             default:
@@ -84,17 +84,17 @@ int main( int argc, char *argv[]  ){
     cout << "@-------------------------------------------------------------@" << endl;
     cout << "| M-CAVIAR!                |                30/Jul/2019| " << endl;
     cout << "|-------------------------------------------------------------|" << endl;
-    cout << "| (C) 2018 Farhad Hormozdiari, GNU General Public License, v2 |" << endl;
+    cout << "|  (C) 2019 Helen & Rosemary, GNU General Public License, v2  |" << endl;
     cout << "|-------------------------------------------------------------|" << endl;
     cout << "| For documentation, citation & bug-report instructions:      |" << endl;
     cout << "|         http://genetics.cs.ucla.edu/caviar/           |" << endl;
     cout << "@-------------------------------------------------------------@" << endl;
-
+    
     
     
     
     MCaviarModel Mcaviar(ldFile, zFile, outputFileName, totalCausalSNP, NCP, rho, histFlag, gamma, tau_sqr, sigma_g_squared);
     Mcaviar.run();
-    Mcaviar.finishUp();     
+    Mcaviar.finishUp();
     return 0;
 }
