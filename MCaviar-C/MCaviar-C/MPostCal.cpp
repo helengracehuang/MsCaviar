@@ -29,7 +29,7 @@ string MPostCal::convertConfig2String(int * config, int size) {
     return result;
 }
 
-mat* MPostCal::construct_diagC(int * configure) {
+mat MPostCal::construct_diagC(int * configure) {
     /*
      construct sigma_C by the kronecker product in paper, it is mn by mn. the variance for vec(lambdaC)|vec(C)
      :param configure the causal status vector of 0 and 1
@@ -42,13 +42,13 @@ mat* MPostCal::construct_diagC(int * configure) {
     mat temp2 = mat(snpCount, snpCount, fill::zeros);
     for(int i = 0; i < snpCount; i++) {
         if (configure[i] == 1)
-            temp2[i][i] = 1;
+            temp2(i, i) = 1;
     }
     mat diagC = kron(temp1, temp2);
     return diagC;
 }
 
-double MPostCal::likelihood(int * configure, double * stat, double NCP) {
+double MPostCal::likelihood(int * configure, vector<double> * stat, double NCP) {
     /*
      compute likelihood of each configuration by Woodbury
      :param configure the causal status vector of 0 and 1
@@ -64,7 +64,7 @@ double MPostCal::likelihood(int * configure, double * stat, double NCP) {
         causalCount += configure[i];
     if(causalCount == 0){
         mat tmpResultMatrixNM = statMatrixtTran * invSigmaMatrix;
-        mat tmpResultMatrixNN = tmpResultMatrix1N * statMatrix;
+        mat tmpResultMatrixNN = tmpResultMatrixNM * statMatrix;
         
         res = tmpResultMatrixNN(0,0);
         matDet = sigmaDet;
@@ -193,24 +193,26 @@ double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
     for(long int i = 0; i < snpCount; i++)
         configure[i] = 0;
     
+    // TODO: fix this pointer issue!
     int* tempConfigure = configure;
     for (int i = 0; i < num_of_studies - 1; i++){
-        tempConfigure = tempConfigure * pow(2, snpCount) + configure;
+        (*tempConfigure) = (*tempConfigure) * pow(2, snpCount) + (*configure);
     }
     
     for(long int i = 0; i < total_iteration; i++) {
-        tmp_likelihood = Likelihood(tempConfigure, stat, NCP) + num * log(gamma) + (snpCount-num) * log(1-gamma);
+        tmp_likelihood = likelihood(tempConfigure, stat, NCP) + num * log(gamma) + (snpCount-num) * log(1-gamma);
         sumLikelihood = addlogSpace(sumLikelihood, tmp_likelihood);
         for(int j = 0; j < snpCount; j++) {
             for(int k = 0; k < num_of_studies; k++){
-                postValues[j] = addlogSpace(postValues[j], tmp_likelihood * configure[j + k * self.snpCount]);
+                postValues[j] = addlogSpace(postValues[j], tmp_likelihood * configure[j + k * snpCount]);
             }
         }
         histValues[num] = addlogSpace(histValues[num], tmp_likelihood);
         num = nextBinary(configure, snpCount);
         tempConfigure = configure;
         for (int m = 0; m < num_of_studies; m++){
-            tempConfigure = tempConfigure * pow(2, snpCount) + configure;
+            // TODO: fix this pointer issue!
+            (*tempConfigure) = (*tempConfigure) * pow(2, snpCount) + (*configure);
         }
         //cout << i << " "  << exp(tmp_likelihood) << endl;
         if(i % 1000 == 0)
@@ -223,9 +225,9 @@ double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
     return(sumLikelihood);
 }
 
-bool MPostCal::validConfigutation(int * configure, char * pcausalSet) {
+bool MPostCal::validConfigutation(int * configure, vector<char> * pcausalSet) {
     for(int i = 0; i < snpCount; i++){
-        if(configure[i] == 1 && pcausalSet[i] == '0')
+        if(configure[i] == 1 && (*pcausalSet)[i] == '0')
             return false;
     }
     return true;
@@ -235,7 +237,7 @@ bool MPostCal::validConfigutation(int * configure, char * pcausalSet) {
  * This is a auxilary function used to generate all possible causal set that
  * are selected in the p-causal set
  */
-void MPostCal::computeALLCausalSetConfiguration(double * stat, double NCP, char * pcausalSet, string outputFileName) {
+void MPostCal::computeALLCausalSetConfiguration(vector<double> * stat, double NCP, vector<char> * pcausalSet, string outputFileName) {
     int num = 0;
     double sumLikelihood = 0;
     double tmp_likelihood = 0;
@@ -249,7 +251,7 @@ void MPostCal::computeALLCausalSetConfiguration(double * stat, double NCP, char 
     for(long int i = 0; i < total_iteration; i++) {
         if (validConfigutation(configure, pcausalSet)) {
             //log space
-            tmp_likelihood = fastLikelihood(configure, stat, NCP) +  num * log(gamma) + (snpCount-num) * log(1-gamma);
+            tmp_likelihood = likelihood(configure, stat, NCP) +  num * log(gamma) + (snpCount-num) * log(1-gamma);
             exportVector2File(outputFileName, configure, snpCount);
             export2File(outputFileName, tmp_likelihood);
         }
@@ -262,7 +264,7 @@ void MPostCal::computeALLCausalSetConfiguration(double * stat, double NCP, char 
  sigma is the correaltion matrix
  G is the map between snp and the gene (snp, gene)
  */
-double MPostCal::findOptimalSetGreedy(double * stat, double NCP, char * pcausalSet, int *rank,  double inputRho, string outputFileName) {
+double MPostCal::findOptimalSetGreedy(vector<double> * stat, double NCP, vector<char> * pcausalSet, vector<int> * rank,  double inputRho, string outputFileName) {
     int index = 0;
     double rho = double(0);
     double total_post = double(0);
@@ -284,14 +286,14 @@ double MPostCal::findOptimalSetGreedy(double * stat, double NCP, char * pcausalS
     printf("\n");
     std::sort(items.begin(), items.end(), by_number());
     for(int i = 0; i < snpCount; i++)
-        rank[i] = items[i].index1;
+        (*rank)[i] = items[i].index1;
     
     for(int i = 0; i < snpCount; i++)
-        pcausalSet[i] = '0';
+        (*pcausalSet)[i] = '0';
     do{
-        rho += exp(postValues[rank[index]]-total_post);
-        pcausalSet[rank[index]] = '1';
-        printf("%d %e\n", rank[index], rho);
+        rho += exp(postValues[(*rank)[index]]-total_post);
+        (*pcausalSet)[(*rank)[index]] = '1';
+        printf("%d %e\n", (*rank)[index], rho);
         index++;
     } while( rho < inputRho);
     
