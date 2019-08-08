@@ -60,11 +60,11 @@ public:
         this-> snpCount = snpCount;
         this-> maxCausalSNP = MAX_causal;
         this-> postValues = new double [snpCount];
-        for(int i = 0; i < snpCount; i++)
-            this->postValues[i] = 0;
+            for(int i = 0; i < snpCount; i++)
+                this->postValues[i] = 0;
         this-> histValues = new double [MAX_causal+1];
-        for(int i= 0; i <= maxCausalSNP;i++)
-            this->histValues[i] = 0;
+            for(int i= 0; i <= maxCausalSNP;i++)
+                this->histValues[i] = 0;
         this-> totalLikeLihoodLOG = 0;
         this-> t_squared = t_squared;
         this-> s_squared = s_squared;
@@ -74,17 +74,17 @@ public:
         // statMatrix is the z-score matrix of mn*1
         statMatrix = mat (snpCount * num_of_studies, 1);
         statMatrixtTran = mat (1, snpCount * num_of_studies);
-        for(int i = 0; i < snpCount * num_of_studies; i++) {
-            statMatrix(i,0) = stat[i];
-            statMatrixtTran(0,i) = stat[i];
-        }
+            for(int i = 0; i < snpCount * num_of_studies; i++) {
+                statMatrix(i,0) = (*S_LONG_VEC)[i];
+                statMatrixtTran(0,i) = (*S_LONG_VEC)[i];
+            }
         // sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         sigmaMatrix = mat (snpCount * num_of_studies, snpCount * num_of_studies);
         std::default_random_engine generator;
         std::normal_distribution<double> distribution(0, 1);
         for(int i = 0; i < snpCount * num_of_studies; i++) {
             for (int j = 0; j < snpCount * num_of_studies; j++)
-                sigmaMatrix(i,j) = BIG_SIGMA(i,j) + distribution(generator) * 0.005; // add epsilon to SIGMA
+                sigmaMatrix(i,j) = (*BIG_SIGMA)(i,j) + distribution(generator) * 0.005; // add epsilon to SIGMA
         }
         invSigmaMatrix = inv(sigmaMatrix);
         sigmaDet       = det(sigmaMatrix);
@@ -123,7 +123,7 @@ public:
             total_post = addlogSpace(total_post, postValues[i]);
         outfile << "SNP_ID\tProb_in_pCausalSet\tCausal_Post._Prob." << endl;
         for(int i = 0; i < snpCount; i++) {
-            outfile << snpNames[i] << "\t" << exp(postValues[i]-total_post) << "\t" << exp(postValues[i]-totalLikeLihoodLOG) << endl;
+            outfile << (*SNP_NAME)[i] << "\t" << exp(postValues[i]-total_post) << "\t" << exp(postValues[i]-totalLikeLihoodLOG) << endl;
         }
     }
     
