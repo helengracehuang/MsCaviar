@@ -125,82 +125,82 @@ double MPostCal::likelihood(int * configure, double * stat, double NCP) {
 }
 
 int MPostCal::nextBinary(int * data, int size) {
-	int i = 0;
-	int total_one = 0;	
-	int index = size-1;
-        int one_countinus_in_end = 0;
-
-        while(index >= 0 && data[index] == 1) {
-                index = index - 1;
-                one_countinus_in_end = one_countinus_in_end + 1;
-	}
-	if(index >= 0) {
-        	while(index >= 0 && data[index] == 0) {
-               	 index = index - 1;	
-		}
-	}
-        if(index == -1) {
-                while(i <  one_countinus_in_end+1 && i < size) {
-                        data[i] = 1;
-                        i=i+1;
-		}
-                i = 0;
-                while(i < size-one_countinus_in_end-1) {
-                        data[i+one_countinus_in_end+1] = 0;
-                        i=i+1;
-		}
-	}
-        else if(one_countinus_in_end == 0) {
-                data[index] = 0;
-                data[index+1] = 1;
-	} else {
-                data[index] = 0;
-                while(i < one_countinus_in_end + 1) {
-                        data[i+index+1] = 1;
-			if(i+index+1 >= size)
-				printf("ERROR3 %d\n", i+index+1);
-                        i=i+1;
-		}
-                i = 0;
-                while(i < size - index - one_countinus_in_end - 2) {
-                        data[i+index+one_countinus_in_end+2] = 0;
-			if(i+index+one_countinus_in_end+2 >= size) {
-				printf("ERROR4 %d\n", i+index+one_countinus_in_end+2);
-			}
-                        i=i+1;
-		}
-	}
-	i = 0;
-	total_one = 0;
-	for(i = 0; i < size; i++)
-		if(data[i] == 1)
-			total_one = total_one + 1;
-	
-	return(total_one);		
+    int i = 0;
+    int total_one = 0;
+    int index = size-1;
+    int one_countinus_in_end = 0;
+    
+    while(index >= 0 && data[index] == 1) {
+        index = index - 1;
+        one_countinus_in_end = one_countinus_in_end + 1;
+    }
+    if(index >= 0) {
+        while(index >= 0 && data[index] == 0) {
+            index = index - 1;
+        }
+    }
+    if(index == -1) {
+        while(i <  one_countinus_in_end+1 && i < size) {
+            data[i] = 1;
+            i=i+1;
+        }
+        i = 0;
+        while(i < size-one_countinus_in_end-1) {
+            data[i+one_countinus_in_end+1] = 0;
+            i=i+1;
+        }
+    }
+    else if(one_countinus_in_end == 0) {
+        data[index] = 0;
+        data[index+1] = 1;
+    } else {
+        data[index] = 0;
+        while(i < one_countinus_in_end + 1) {
+            data[i+index+1] = 1;
+            if(i+index+1 >= size)
+                printf("ERROR3 %d\n", i+index+1);
+            i=i+1;
+        }
+        i = 0;
+        while(i < size - index - one_countinus_in_end - 2) {
+            data[i+index+one_countinus_in_end+2] = 0;
+            if(i+index+one_countinus_in_end+2 >= size) {
+                printf("ERROR4 %d\n", i+index+one_countinus_in_end+2);
+            }
+            i=i+1;
+        }
+    }
+    i = 0;
+    total_one = 0;
+    for(i = 0; i < size; i++)
+        if(data[i] == 1)
+            total_one = total_one + 1;
+    
+    return(total_one);
 }
 
 double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
-	int num = 0;
-	double sumLikelihood = 0;
-	double tmp_likelihood = 0;
-	long int total_iteration = 0 ;
-	int* configure = (int *) malloc (snpCount * sizeof(int *)); // original data
-
-	for(long int i = 0; i <= maxCausalSNP; i++)
-		total_iteration = total_iteration + nCr(snpCount, i);
-	cout << "Max Causal=" << maxCausalSNP << endl;
+    int num = 0;
+    double sumLikelihood = 0;
+    double tmp_likelihood = 0;
+    long int total_iteration = 0 ;
+    int* configure = (int *) malloc (snpCount * sizeof(int *)); // original data
     
-	for(long int i = 0; i < snpCount; i++) 
-		configure[i] = 0;
+    for(long int i = 0; i <= maxCausalSNP; i++)
+        total_iteration = total_iteration + nCr(snpCount, i);
+    cout << "Max Causal=" << maxCausalSNP << endl;
+    
+    for(long int i = 0; i < snpCount; i++)
+        configure[i] = 0;
     
     int* tempConfigure = configure;
     for (int i = 0; i < num_of_studies - 1; i++){
         tempConfigure = tempConfigure * pow(2, snpCount) + configure;
     }
     
-	for(long int i = 0; i < total_iteration; i++) {
-            tmp_likelihood = Likelihood(tempConfigure, stat, NCP) + num * log(gamma) + (snpCount-num) * log(1-gamma);
-            sumLikelihood = addlogSpace(sumLikelihood, tmp_likelihood);
+    for(long int i = 0; i < total_iteration; i++) {
+        tmp_likelihood = Likelihood(tempConfigure, stat, NCP) + num * log(gamma) + (snpCount-num) * log(1-gamma);
+        sumLikelihood = addlogSpace(sumLikelihood, tmp_likelihood);
         for(int j = 0; j < snpCount; j++) {
             for(int k = 0; k < num_of_studies; k++){
                 postValues[j] = addlogSpace(postValues[j], tmp_likelihood * configure[j + k * self.snpCount]);
@@ -215,86 +215,86 @@ double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
         //cout << i << " "  << exp(tmp_likelihood) << endl;
         if(i % 1000 == 0)
             cerr << "\r                                                                 \r" << (double) (i) / (double) total_iteration * 100.0 << "%";
-	}
+    }
     
-	for(int i = 0; i <= maxCausalSNP; i++)
-		histValues[i] = exp(histValues[i]-sumLikelihood);
-        free(configure);
-        return(sumLikelihood);
+    for(int i = 0; i <= maxCausalSNP; i++)
+        histValues[i] = exp(histValues[i]-sumLikelihood);
+    free(configure);
+    return(sumLikelihood);
 }
 
 bool MPostCal::validConfigutation(int * configure, char * pcausalSet) {
-	for(int i = 0; i < snpCount; i++){
-		if(configure[i] == 1 && pcausalSet[i] == '0')
-			return false;
-	}
-	return true;	
+    for(int i = 0; i < snpCount; i++){
+        if(configure[i] == 1 && pcausalSet[i] == '0')
+            return false;
+    }
+    return true;
 }
 
 /*
- * This is a auxilary function used to generate all possible causal set that 
+ * This is a auxilary function used to generate all possible causal set that
  * are selected in the p-causal set
-*/
+ */
 void MPostCal::computeALLCausalSetConfiguration(double * stat, double NCP, char * pcausalSet, string outputFileName) {
-	int num = 0;
-        double sumLikelihood = 0;
-        double tmp_likelihood = 0;
-        long int total_iteration = 0 ;
-        int * configure = (int *) malloc (snpCount * sizeof(int *)); // original data   
-
-        for(long int i = 0; i <= maxCausalSNP; i++)
-                total_iteration = total_iteration + nCr(snpCount, i);
-        for(long int i = 0; i < snpCount; i++)
-                configure[i] = 0;
-        for(long int i = 0; i < total_iteration; i++) {
-		if (validConfigutation(configure, pcausalSet)) {
-			//log space
-                	tmp_likelihood = fastLikelihood(configure, stat, NCP) +  num * log(gamma) + (snpCount-num) * log(1-gamma);
-			exportVector2File(outputFileName, configure, snpCount);
-			export2File(outputFileName, tmp_likelihood);
-		}
-		num = nextBinary(configure, snpCount);
-	}
+    int num = 0;
+    double sumLikelihood = 0;
+    double tmp_likelihood = 0;
+    long int total_iteration = 0 ;
+    int * configure = (int *) malloc (snpCount * sizeof(int *)); // original data
+    
+    for(long int i = 0; i <= maxCausalSNP; i++)
+        total_iteration = total_iteration + nCr(snpCount, i);
+    for(long int i = 0; i < snpCount; i++)
+        configure[i] = 0;
+    for(long int i = 0; i < total_iteration; i++) {
+        if (validConfigutation(configure, pcausalSet)) {
+            //log space
+            tmp_likelihood = fastLikelihood(configure, stat, NCP) +  num * log(gamma) + (snpCount-num) * log(1-gamma);
+            exportVector2File(outputFileName, configure, snpCount);
+            export2File(outputFileName, tmp_likelihood);
+        }
+        num = nextBinary(configure, snpCount);
+    }
 }
 
 /*
-	stat is the z-scpres
-	sigma is the correaltion matrix
-	G is the map between snp and the gene (snp, gene)
-*/
+ stat is the z-scpres
+ sigma is the correaltion matrix
+ G is the map between snp and the gene (snp, gene)
+ */
 double MPostCal::findOptimalSetGreedy(double * stat, double NCP, char * pcausalSet, int *rank,  double inputRho, string outputFileName) {
-	int index = 0;
+    int index = 0;
     double rho = double(0);
     double total_post = double(0);
-
+    
     totalLikeLihoodLOG = computeTotalLikelihood(stat, NCP);
-	
-	export2File(outputFileName+".log", exp(totalLikeLihoodLOG)); //Output the total likelihood to the log File
-	for(int i = 0; i < snpCount; i++)
-		total_post = addlogSpace(total_post, postValues[i]);
-	printf("Total Likelihood= %e SNP=%d \n", total_post, snpCount);
-	
+    
+    export2File(outputFileName+".log", exp(totalLikeLihoodLOG)); //Output the total likelihood to the log File
+    for(int i = 0; i < snpCount; i++)
+        total_post = addlogSpace(total_post, postValues[i]);
+    printf("Total Likelihood= %e SNP=%d \n", total_post, snpCount);
+    
     std::vector<data> items;
     std::set<int>::iterator it;
-//output the poster to files
+    //output the poster to files
     for(int i = 0; i < snpCount; i++) {
-         //printf("%d==>%e ",i, postValues[i]/total_likelihood);
-         items.push_back(data(exp(postValues[i]-total_post), i, 0));
+        //printf("%d==>%e ",i, postValues[i]/total_likelihood);
+        items.push_back(data(exp(postValues[i]-total_post), i, 0));
     }
     printf("\n");
     std::sort(items.begin(), items.end(), by_number());
     for(int i = 0; i < snpCount; i++)
-            rank[i] = items[i].index1;
-
+        rank[i] = items[i].index1;
+    
     for(int i = 0; i < snpCount; i++)
-            pcausalSet[i] = '0';
+        pcausalSet[i] = '0';
     do{
-            rho += exp(postValues[rank[index]]-total_post);
-            pcausalSet[rank[index]] = '1';
-            printf("%d %e\n", rank[index], rho);
-            index++;
+        rho += exp(postValues[rank[index]]-total_post);
+        pcausalSet[rank[index]] = '1';
+        printf("%d %e\n", rank[index], rho);
+        index++;
     } while( rho < inputRho);
-
+    
     printf("\n");
-	return(0);
+    return(0);
 }
