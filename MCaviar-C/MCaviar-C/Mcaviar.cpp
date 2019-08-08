@@ -5,7 +5,6 @@
 #include <math.h>
 #include <unistd.h>
 #include <vector>
-
 #include "MUtil.h"
 #include "MPostCal.h"
 #include "MTopKSNP.h"
