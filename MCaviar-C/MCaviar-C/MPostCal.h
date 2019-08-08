@@ -39,7 +39,7 @@ private:
     mat invSigmaMatrix;
     mat statMatrix;
     mat statMatrixtTran;
-    vector<string> * SNP_NAME;
+    vector<vector<string> > * SNP_NAME;
     
     double addlogSpace(double a, double b) {
         if (a == 0)
@@ -54,7 +54,7 @@ private:
     
 public:
     
-    MPostCal(mat * BIG_SIGMA, vector<double> * S_LONG_VEC, int snpCount, int MAX_causal, vector<string> * SNP_NAME, double gamma, double t_squared, double s_squared, int num_of_studies) {
+    MPostCal(mat * BIG_SIGMA, vector<double> * S_LONG_VEC, int snpCount, int MAX_causal, vector<vector<string> > * SNP_NAME, double gamma, double t_squared, double s_squared, int num_of_studies) {
         this->gamma = gamma;
         this->SNP_NAME = SNP_NAME;
         this-> snpCount = snpCount;
@@ -96,8 +96,8 @@ public:
         delete [] postValues;
     }
     
-    bool validConfigutation(int * configure, char * pcausalSet);
-    void computeALLCausalSetConfiguration(double * stat, double NCP, char * pcausalSet, string outputFileName);
+    bool validConfigutation(int * configure, vector<char> * pcausalSet);
+    void computeALLCausalSetConfiguration(vector<double> * stat, double NCP, vector<char> * pcausalSet, string outputFileName);
     
     
     // double dmvnorm(mat Z, mat mean, mat R);
@@ -106,11 +106,11 @@ public:
     
     
     // double fastLikelihood(int * configure, double * stat, double NCP);
-    mat* construct_diagC(int * configure);
-    double likelihood(int * configure, double * stat, double NCP) ;
+    mat construct_diagC(int * configure);
+    double likelihood(int * configure, vector<double> * stat, double NCP) ;
     int nextBinary(int * data, int size) ;
-    double computeTotalLikelihood(double * stat, double NCP) ;
-    double findOptimalSetGreedy(double * stat, double NCP, char * pcausalSet, int *rank,  double inputRho, string outputFileName);
+    double computeTotalLikelihood(vector<double> * stat, double NCP) ;
+    double findOptimalSetGreedy(vector<double> * stat, double NCP, vector<char> * pcausalSet, vector<int> *rank,  double inputRho, string outputFileName);
     string convertConfig2String(int * config, int size);
     void printHist2File(string fileName) {
         exportVector2File(fileName, histValues, maxCausalSNP+1);
@@ -123,7 +123,7 @@ public:
             total_post = addlogSpace(total_post, postValues[i]);
         outfile << "SNP_ID\tProb_in_pCausalSet\tCausal_Post._Prob." << endl;
         for(int i = 0; i < snpCount; i++) {
-            outfile << (*SNP_NAME)[i] << "\t" << exp(postValues[i]-total_post) << "\t" << exp(postValues[i]-totalLikeLihoodLOG) << endl;
+            outfile << (*SNP_NAME)[0][i] << "\t" << exp(postValues[i]-total_post) << "\t" << exp(postValues[i]-totalLikeLihoodLOG) << endl;
         }
     }
     
