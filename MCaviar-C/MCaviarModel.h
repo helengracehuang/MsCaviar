@@ -34,17 +34,17 @@ void remove(mat& LD, vector<string>*& name, vector<double>*& z_score, int pos){
     LD.shed_col(pos);
 }
 
-void Msort(vector<int>& index, vector<string>* name, vector<double>* z_score, mat& LD){
+void Msort(vector<int>& index, vector<string>& name, vector<double>& z_score, mat& LD){
     vector<string>* new_name = new vector<string>;
     vector<double>* new_z = new vector<double>;
     
     for(int i = 0; i < index.size(); i++){
-        new_name->push_back(name->at(index.at(i)));
-        new_z->push_back(z_score->at(index.at(i)));
+        new_name->push_back(name.at(index.at(i)));
+        new_z->push_back(z_score.at(index.at(i)));
     }
     
-    name = new_name;
-    z_score = new_z;
+    name = *new_name;
+    z_score = *new_z;
     
     mat* temp_LD_1 = new mat(size(LD));
     for(int i = 0; i < index.size(); i++){
@@ -178,21 +178,20 @@ public:
         }
         
         for(int i = 0; i < snpNames->size(); i++){
-            temp_names = &(snpNames->at(i));
-            sort(temp_names->begin(), temp_names->end());
+            vector<string> temp_names;
+            temp_names = snpNames->at(i);
+            sort(temp_names.begin(), temp_names.end());
             vector<int> index;
             int j = 0;
-            while(j < temp_names->size()) {
+            while(j < temp_names.size()) {
                 for(int k = 0; k < (*snpNames)[i].size(); k++){
-                    string test = (*temp_names)[j];
-                    string test2 = (*snpNames)[i][k];
-                    if((*temp_names)[j] == (*snpNames)[i][k]){
+                    if((temp_names)[j] == (*snpNames)[i][k]){
                         index.push_back(k);
                         j++;
                     }
                 }
            }
-            Msort(index, &((*snpNames)[i]), &((*z_score)[i]), (*sigma)[i]);
+            Msort(index, (*snpNames)[i], (*z_score)[i], (*sigma)[i]);
         }
         
         num_of_studies = snpNames->size();
@@ -226,6 +225,7 @@ public:
             temp_sigma = kron(temp_sigma, sigma->at(i));
             (*BIG_SIGMA) = (*BIG_SIGMA) + temp_sigma;
         }
+        
         post = new MPostCal(BIG_SIGMA, &S_LONG_VEC, snpCount, totalCausalSNP, snpNames, gamma, tau_sqr, sigma_g_squared, num_of_studies);
     }
     

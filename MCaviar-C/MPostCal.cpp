@@ -74,12 +74,14 @@ double MPostCal::likelihood(vector<int> configure, vector<double> * stat, double
     mat sigmaC = construct_diagC(configure);
     int index_C = 0;
     mat sigmaMatrixTran = sigmaMatrix.t();
+    
     // U is kn by mn matrix of columns corresponding to causal SNP in sigmacC
     mat U(causalCount * num_of_studies, snpCount * num_of_studies, fill::zeros);
     for (int i = 0; i < snpCount * num_of_studies; i++) {
         if (configure[i] == 1) {
-            for (int j = 0; j < snpCount * num_of_studies; j++)
+            for (int j = 0; j < snpCount * num_of_studies; j++) {
                 U(index_C, j) = sigmaC(i, j);
+            }
             index_C ++;
         }
     }
@@ -95,33 +97,24 @@ double MPostCal::likelihood(vector<int> configure, vector<double> * stat, double
         }
     }
     V = V.t();
-    /*
-    cout << "U matrix is ";
-    for(int i = 0; i < snpCount * num_of_studies; i++){
-        for(int j = 0; j < causalCount * num_of_studies; j++){
-            cout << V(i,j) << " ";
-        }
-        cout << "\n";
-    }*/
     
     // UV = SigmaC * Sigma (kn by kn)
     mat UV(causalCount * num_of_studies, causalCount * num_of_studies, fill::zeros);
     UV = U * V;
-    
+
     mat I_AA   = mat(snpCount, snpCount, fill::eye);
-    mat tmp_CC = mat(causalCount, causalCount, fill::eye)+ UV;
+    mat tmp_CC = mat(causalCount, causalCount, fill::eye) + UV;
     matDet = det(tmp_CC) * sigmaDet;
     
     mat temp1 = invSigmaMatrix * V;
     mat temp2 = temp1 * pinv(tmp_CC);
     mat tmp_AA = invSigmaMatrix - temp2 * U ;
     //tmp_AA     = invSigmaMatrix * tmp_AA;
+    
     mat tmpResultMatrix1N = statMatrixtTran * tmp_AA;
     mat tmpResultMatrix11 = tmpResultMatrix1N * statMatrix;
     res = tmpResultMatrix11(0,0);
-    
-    //cout << "res is "<< res << "\n";
-    
+
     if(matDet==0) {
         cout << "Error the matrix is singular and we fail to fix it." << endl;
         exit(0);
