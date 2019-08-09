@@ -61,26 +61,27 @@ void Msort(vector<int>& index, vector<string>& name, vector<double>& z_score, ma
     LD = *temp_LD_2;
 }
 
-vector<string>* find_intersection(vector<string>* name_1, vector<string>* name_2){
+vector<string>* find_intersection(vector<string>* name_1, const vector<string>* name_2){
     vector<string>* inters = new vector<string>;
+    vector<string> temp = *name_2;
     sort(name_1->begin(), name_1->end());
-    sort(name_2->begin(), name_2->end());
+    sort(temp.begin(), temp.end());
     int i = 0;
     int j = 0;
     
     do{
-        if(name_1->at(i) == name_2->at(j)) {
+        if(name_1->at(i) == temp.at(j)) {
             inters->push_back(name_1->at(i));
             i++;
             j++;
         }
-        else if(name_1->at(i) < name_2->at(j)) {
+        else if(name_1->at(i) < temp.at(j)) {
             i++;
         }
         else{
             j++;
         }
-    } while(i<name_1->size() && j<name_2->size());
+    } while(i<name_1->size() && j< temp.size());
     
     return inters;
 }
@@ -123,16 +124,16 @@ public:
         this->sigma_g_squared = sigma_g_squared;
         
         fileSize(ldFile, tmpSize);
-        //snpCount   = (int)sqrt(tmpSize);
         sigma      = new vector<mat>;
         z_score       = new vector<vector<double> >;
-        //pcausalSet = new vector<char>;
-        //rank       = new vector<int>;
         snpNames   = new vector<vector<string> >;
         
         vector<double>* temp_LD = new vector<double>;
-        vector<string>* temp_names = new vector<string>;
-        vector<double>* temp_z = new vector<double>;
+        vector<string> temp_names;
+        vector<double> temp_z;
+
+        vector<string> temp_names_2;
+        vector<double> temp_z_2;
         
         //importData(ldFile, temp_LD);
         //importDataFirstColumn(zFile, temp_names);
@@ -146,19 +147,30 @@ public:
         importDataFirstColumn(Z, temp_names);
         importDataSecondColumn(Z, temp_z);
         
-        mat temp_sig;
-        temp_sig = mat(50,50);
+        importDataFirstColumn(Z, temp_names_2);
+        importDataSecondColumn(Z, temp_z_2);
+        
+        mat temp_sig_1;
+        temp_sig_1 = mat(50,50);
+        
+        mat temp_sig_2;
+        temp_sig_2 = mat(50,50);
+        
         for (int i = 0; i <50; i++){
             for (int j = 0; j<50; j++){
-                temp_sig(i,j) = temp_LD->at(i * 50 + j); }
+                temp_sig_1(i,j) = temp_LD->at(i * 50 + j);
+                temp_sig_2(i,j) = temp_LD->at(i * 50 + j);
+            }
         }
         
-        sigma->push_back(temp_sig);
-        snpNames->push_back(*temp_names);
-        z_score->push_back(*temp_z);
+        sigma->push_back(temp_sig_1);
+        snpNames->push_back(temp_names);
+        z_score->push_back(temp_z);
         
+        sigma->push_back(temp_sig_2);
+        snpNames->push_back(temp_names_2);
+        z_score->push_back(temp_z_2);
         
-        //ASSUMING snpNames is vector of vectors of string now, sigma is a vector of matrix now, z-score is a vector of vector of double
         vector<string> intersect = (*snpNames)[0];
         for(int i = 1 ; i < snpNames->size(); i++){
             intersect = (*find_intersection(&intersect, &((*snpNames)[i])));
@@ -177,10 +189,16 @@ public:
             } while(j <= 0);
         }
         
-        for(int i = 0; i < snpNames->size(); i++){
+        num_of_studies = snpNames->size();
+        snpCount = (*snpNames)[0].size();
+        pcausalSet = new vector<char>(snpCount);
+        rank = new vector<int>(snpCount, 0);
+        
+        for(int i = 0; i < num_of_studies; i++){
             vector<string> temp_names;
             temp_names = snpNames->at(i);
             sort(temp_names.begin(), temp_names.end());
+            
             vector<int> index;
             int j = 0;
             while(j < temp_names.size()) {
@@ -190,14 +208,9 @@ public:
                         j++;
                     }
                 }
-           }
+            }
             Msort(index, (*snpNames)[i], (*z_score)[i], (*sigma)[i]);
         }
-        
-        num_of_studies = snpNames->size();
-        snpCount = (*snpNames)[0].size();
-        pcausalSet = new vector<char>(snpCount);
-        rank = new vector<int>(snpCount, 0);
         
         for (int i = 0; i < z_score->size(); i++){
             for(int j = 0; j < (*z_score)[i].size(); j++){
@@ -218,10 +231,9 @@ public:
         }
         
         mat* BIG_SIGMA = new mat(snpCount * num_of_studies, snpCount * num_of_studies);
-        for (int i = 0 ; i < sigma->size(); i++){
-            mat temp_sigma = mat(num_of_studies,num_of_studies);
+        for (int i = 0 ; i < num_of_studies; i++){
+            mat temp_sigma = mat(num_of_studies , num_of_studies, fill::zeros);
             temp_sigma(i,i) = 1;
-            
             temp_sigma = kron(temp_sigma, sigma->at(i));
             (*BIG_SIGMA) = (*BIG_SIGMA) + temp_sigma;
         }

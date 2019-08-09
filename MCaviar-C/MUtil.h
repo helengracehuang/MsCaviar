@@ -45,9 +45,9 @@ void multVectorMatrix(double *vector, double * matrix, int size, double * result
 void fileSize(string fileName, int & size);
 void importData(string fileName, vector<double> *& vector);
 void importData(string fileName, vector<int> *& vector);
-void importDataSecondColumn(string fileName, vector<double> *& vector);
-void importDataNthColumn(string fileName, vector<double> *& vector, int colNum, int ignore=0);
-void importDataFirstColumn(string fileName, vector<string> *& list, int ignore=0);
+void importDataSecondColumn(string fileName, vector<double>& vector);
+void importDataNthColumn(string fileName, vector<double>& vector, int colNum, int ignore=0);
+void importDataFirstColumn(string fileName, vector<string>& list, int ignore=0);
 void rmvnorm(double * mean, double * sigma, int size, double * results);
 void resetVector(char *data, int size);
 void resetVector(int *data, int size);

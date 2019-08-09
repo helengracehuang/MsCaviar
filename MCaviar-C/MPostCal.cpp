@@ -103,13 +103,12 @@ double MPostCal::likelihood(vector<int> configure, vector<double> * stat, double
     UV = U * V;
 
     mat I_AA   = mat(snpCount, snpCount, fill::eye);
-    mat tmp_CC = mat(causalCount, causalCount, fill::eye) + UV;
+    mat tmp_CC = mat(causalCount * num_of_studies, causalCount * num_of_studies, fill::eye) + UV;
     matDet = det(tmp_CC) * sigmaDet;
     
     mat temp1 = invSigmaMatrix * V;
     mat temp2 = temp1 * pinv(tmp_CC);
     mat tmp_AA = invSigmaMatrix - temp2 * U ;
-    //tmp_AA     = invSigmaMatrix * tmp_AA;
     
     mat tmpResultMatrix1N = statMatrixtTran * tmp_AA;
     mat tmpResultMatrix11 = tmpResultMatrix1N * statMatrix;
@@ -190,9 +189,7 @@ double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
     double sumLikelihood = 0;
     double tmp_likelihood = 0;
     long int total_iteration = 0 ;
-    //int* configure = (int *) malloc (snpCount * sizeof(int *)); // original data
-    
-    vector<int> configure(snpCount * num_of_studies);
+    vector<int> configure(snpCount);
     
     for(long int i = 0; i <= maxCausalSNP; i++)
         total_iteration = total_iteration + nCr(snpCount, i);
@@ -203,7 +200,6 @@ double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
     
     vector<int> tempConfigure = configure;
     for (int i = 0; i < num_of_studies - 1; i++){
-        //(*tempConfigure) = (*tempConfigure) * pow(2, snpCount) + (*configure);
         for(int j = 0; j < configure.size(); j++){
             tempConfigure.push_back(configure[j]);
         }
@@ -214,9 +210,6 @@ double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
         tmp_likelihood = likelihood(tempConfigure, stat, NCP) + num * log(gamma) + (snpCount-num) * log(1-gamma);
         sumLikelihood = addlogSpace(sumLikelihood, tmp_likelihood);
         
-        //cout << "tmp likeli is " << tmp_likelihood << "\n";
-        //cout << "sum likeli is " << sumLikelihood << "\n";
-        
         for(int j = 0; j < snpCount; j++) {
             for(int k = 0; k < num_of_studies; k++){
                 postValues[j] = addlogSpace(postValues[j], tmp_likelihood * configure[j + k * snpCount]);
@@ -224,19 +217,10 @@ double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
         }
         histValues[num] = addlogSpace(histValues[num], tmp_likelihood);
         num = nextBinary(configure, snpCount);
-        tempConfigure = configure;
-        for (int i = 0; i < num_of_studies - 1; i++){
-            //(*tempConfigure) = (*tempConfigure) * pow(2, snpCount) + (*configure);
-            for(int j = 0; j < configure.size(); j++){
-                tempConfigure.push_back(configure[j]);
-            }
-        }
         
         for (int m = 0; m < num_of_studies; m++){
-            // TODO: fix this pointer issue!
-            //*tempConfigure = *tempConfigure * pow(2, snpCount) + (*configure);
             for (int i = 0; i < configure.size(); i++){
-                tempConfigure.push_back(configure[i]);
+                tempConfigure[snpCount * m + i] = configure[i];
             }
         }
         //cout << i << " "  << exp(tmp_likelihood) << endl;
