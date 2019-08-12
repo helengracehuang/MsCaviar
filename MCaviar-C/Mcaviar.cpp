@@ -3,14 +3,41 @@
 #include <string>
 #include <cmath>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <armadillo>
 #include <unistd.h>
 #include <vector>
 #include "MUtil.h"
 #include "MPostCal.h"
-#include "MTopKSNP.h"
 #include "MCaviarModel.h"
 
 using namespace std;
+
+vector<string> read_dir(string fileName){
+    vector<string> dirs;
+    string data;
+    
+    ifstream fin;
+    fin.open(fileName);
+    if (!fin) {
+        cout << "Unable to open file";
+        exit(1); // terminate with error
+    }
+    
+    while(!fin.eof()){
+        getline(fin,data);
+        dirs.push_back(data); }
+    fin.close();
+    return dirs;
+}
+
 
 int main( int argc, char *argv[]  ){
     int totalCausalSNP = 2;
@@ -81,18 +108,27 @@ int main( int argc, char *argv[]  ){
     
     //program is running
     cout << "@-------------------------------------------------------------@" << endl;
-    cout << "| M-CAVIAR!                |                30/Jul/2019| " << endl;
+    cout << "| M-CAVIAR!                |                30/Jul/2019       | " << endl;
     cout << "|-------------------------------------------------------------|" << endl;
     cout << "|  (C) 2019 Helen & Rosemary, GNU General Public License, v2  |" << endl;
     cout << "|-------------------------------------------------------------|" << endl;
     cout << "| For documentation, citation & bug-report instructions:      |" << endl;
-    cout << "|         http://genetics.cs.ucla.edu/caviar/           |" << endl;
+    cout << "|         http://genetics.cs.ucla.edu/caviar/                 |" << endl;
     cout << "@-------------------------------------------------------------@" << endl;
     
     
+    vector<string> ldDir;
+    ldDir = read_dir(ldFile);
+
+    vector<string> zDir;
+    zDir = read_dir(zFile);
     
+    if(ldDir.size() != zDir.size()) {
+        cout << "Error, LD files and Z files do not match in number" << endl;
+        return 0;
+    }
     
-    MCaviarModel Mcaviar(ldFile, zFile, outputFileName, totalCausalSNP, NCP, rho, histFlag, gamma, tau_sqr, sigma_g_squared);
+    MCaviarModel Mcaviar(ldDir, zDir, outputFileName, totalCausalSNP, NCP, rho, histFlag, gamma, tau_sqr, sigma_g_squared);
     Mcaviar.run();
     Mcaviar.finishUp();
     return 0;

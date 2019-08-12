@@ -101,8 +101,8 @@ public:
     bool histFlag;
     MPostCal * post;
     vector< vector<string> > * snpNames;
-    string ldFile;
-    string zFile;
+    vector<string> ldDir;
+    vector<string> zDir;
     string outputFileName;
     string geneMapFile;
     double tau_sqr;
@@ -110,66 +110,47 @@ public:
     int num_of_studies;
     vector<double> S_LONG_VEC;
     
-    MCaviarModel(string ldFile, string zFile, string outputFileName, int totalCausalSNP, double NCP, double rho, bool histFlag, double gamma=0.01, double tau_sqr = 0.2, double sigma_g_squared = 5.2) {
-        int tmpSize = 0;
+    MCaviarModel(vector<string> ldDir, vector<string> zDir, string outputFileName, int totalCausalSNP, double NCP, double rho, bool histFlag, double gamma=0.01, double tau_sqr = 0.2, double sigma_g_squared = 5.2) {
         this->histFlag = histFlag;
         this->NCP = NCP;
         this->rho = rho;
         this->gamma = gamma;
-        this->ldFile = ldFile;
-        this->zFile  = zFile;
+        this->ldDir = ldDir;
+        this->zDir  = zDir;
         this->outputFileName = outputFileName;
         this->totalCausalSNP = totalCausalSNP;
         this->tau_sqr = tau_sqr;
         this->sigma_g_squared = sigma_g_squared;
         
-        fileSize(ldFile, tmpSize);
+        //fileSize(ldFile, tmpSize);
         sigma      = new vector<mat>;
         z_score       = new vector<vector<double> >;
         snpNames   = new vector<vector<string> >;
         
-        vector<double>* temp_LD = new vector<double>;
-        vector<string> temp_names;
-        vector<double> temp_z;
-
-        vector<string> temp_names_2;
-        vector<double> temp_z_2;
-        
-        //importData(ldFile, temp_LD);
-        //importDataFirstColumn(zFile, temp_names);
-        //importDataSecondColumn(zFile, temp_z);
-        
-        string LD = "50_LD.txt";
-        string Z = "50_Z.txt";
-        outputFileName = "result";
-        
-        importData(LD, temp_LD);
-        importDataFirstColumn(Z, temp_names);
-        importDataSecondColumn(Z, temp_z);
-        
-        importDataFirstColumn(Z, temp_names_2);
-        importDataSecondColumn(Z, temp_z_2);
-        
-        mat temp_sig_1;
-        temp_sig_1 = mat(50,50);
-        
-        mat temp_sig_2;
-        temp_sig_2 = mat(50,50);
-        
-        for (int i = 0; i <50; i++){
-            for (int j = 0; j<50; j++){
-                temp_sig_1(i,j) = temp_LD->at(i * 50 + j);
-                temp_sig_2(i,j) = temp_LD->at(i * 50 + j);
+        for(int i = 0; i < ldDir.size(); i++) {
+            string ld_file = ldDir[i];
+            string z_file = zDir[i];
+            
+            vector<double>* temp_LD = new vector<double>;
+            vector<string> temp_names;
+            vector<double> temp_z;
+            
+            importData(ld_file, temp_LD);
+            importDataFirstColumn(z_file, temp_names);
+            importDataSecondColumn(z_file, temp_z);
+            
+            mat temp_sig;
+            temp_sig = mat(50,50);
+            for (int i = 0; i <50; i++){
+                for (int j = 0; j<50; j++){
+                    temp_sig(i,j) = temp_LD->at(i * 50 + j);
+                }
             }
+            
+            sigma->push_back(temp_sig);
+            snpNames->push_back(temp_names);
+            z_score->push_back(temp_z);
         }
-        
-        sigma->push_back(temp_sig_1);
-        snpNames->push_back(temp_names);
-        z_score->push_back(temp_z);
-        
-        sigma->push_back(temp_sig_2);
-        snpNames->push_back(temp_names_2);
-        z_score->push_back(temp_z_2);
         
         vector<string> intersect = (*snpNames)[0];
         for(int i = 1 ; i < snpNames->size(); i++){
@@ -247,26 +228,31 @@ public:
     
     void finishUp() {
         ofstream outputFile;
-        string outFileNameSet = string(outputFileName)+"_set";
+        string outFileNameSet = string(outputFileName)+"_set.txt";
         outputFile.open(outFileNameSet.c_str());
         for(int i = 0; i < snpCount; i++) {
             if((*pcausalSet)[i] == '1')
                 outputFile << (*snpNames)[0][i] << endl;
         }
-        post->printPost2File(string(outputFileName)+"_post");
+        post->printPost2File(string(outputFileName)+"_post.txt");
         //output sthe histogram data to file
         if(histFlag)
-            post->printHist2File(string(outputFileName)+"_hist");
+            post->printHist2File(string(outputFileName)+"_hist.txt");
     }
     
     void printLogData() {
         //print likelihood
         //print all possible configuration from the p-causal set
-        post->computeALLCausalSetConfiguration(&S_LONG_VEC, NCP, pcausalSet,outputFileName+".log");
+        post->computeALLCausalSetConfiguration(&S_LONG_VEC, NCP, pcausalSet,outputFileName+"._log.txt");
     }
     
-    ~MCaviarModel() {}
-    
+    ~MCaviarModel() {
+        delete z_score;
+        delete pcausalSet;
+        delete rank;
+        delete sigma;
+        delete post;
+    }
 };
 
 #endif

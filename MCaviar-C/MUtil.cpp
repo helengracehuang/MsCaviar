@@ -90,22 +90,6 @@ void multVectorMatrix(double *vector, double * matrix, int size, double * result
 }
 
 void importData(string fileName, vector<double> *& vector) {
-    /*double data = 0;
-    string dataS = "";
-    std::stringstream dataSS;
-    ifstream fin(fileName.c_str(), std::ifstream::in);
-    fin >> dataS;
-    stringstream(dataS) >> data;
-    while ( fin.good()) {
-        vector->push_back(data);
-        fin >> dataS;
-        if (dataS.find("nan") == string::npos)
-            stringstream(dataS) >> data;
-        else
-            data = 0;
-    }
-    fin.close();*/
-    
     ifstream file(fileName, ifstream::in);
     if (!file) {
         cout << "Unable to open file";
@@ -117,7 +101,7 @@ void importData(string fileName, vector<double> *& vector) {
     file.close();
 }
 
-void importData(string fileName, vector<int> *& vector) {
+void importData(string fileName, vector<int>*& vector) {
     double data = 0;
     ifstream fin(fileName.c_str(), std::ifstream::in);
     while( fin.good()  ){

@@ -96,6 +96,7 @@ public:
     ~MPostCal() {
         delete [] histValues;
         delete [] postValues;
+        delete SNP_NAME;
     }
     
     void computeALLCausalSetConfiguration(vector<double> * stat, double NCP, vector<char> * pcausalSet, string outputFileName);
