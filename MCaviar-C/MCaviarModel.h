@@ -19,6 +19,12 @@
 using namespace std;
 using namespace arma;
 
+/*
+ returns if an element is not found in the file
+ @param vec vector of string
+ @param str a string to be found
+ @return boolean
+ 
 bool not_find(vector<string> vec, string str){
     for(int i = 0; i < vec.size(); i++) {
         if (vec[i] == str)
@@ -27,6 +33,14 @@ bool not_find(vector<string> vec, string str){
     return false;
 }
 
+
+ removes elements from LD matrix, name and z vector
+ @param LD the ld matrix
+ @param name the name vector
+ @param z_score the z score matrix
+ @param pos the position to be removed
+ @return no return
+ 
 void remove(mat& LD, vector<string>*& name, vector<double>*& z_score, int pos){
     name->erase(name->begin() + pos);
     z_score->erase(z_score->begin() + pos);
@@ -34,6 +48,14 @@ void remove(mat& LD, vector<string>*& name, vector<double>*& z_score, int pos){
     LD.shed_col(pos);
 }
 
+
+ sort the vectors and LD matrix according to an index
+ @param index the index to be sorted
+ @param name the name vector
+ @param z_score the z vector
+ @param LD the ld matrix
+ @return no return
+ 
 void Msort(vector<int>& index, vector<string>& name, vector<double>& z_score, mat& LD){
     vector<string>* new_name = new vector<string>;
     vector<double>* new_z = new vector<double>;
@@ -59,10 +81,22 @@ void Msort(vector<int>& index, vector<string>& name, vector<double>& z_score, ma
     
     *temp_LD_2 = trans(*temp_LD_2);
     LD = *temp_LD_2;
+    
+    delete new_name;
+    delete new_z;
+    delete temp_LD_1;
+    delete temp_LD_2;
 }
 
-vector<string>* find_intersection(vector<string>* name_1, const vector<string>* name_2){
-    vector<string>* inters = new vector<string>;
+
+ find the intersection between 2 vectors
+ @param name_1 first vec
+ @param name_2 second vec
+ @return a vector of strings that is the intersection
+ 
+vector<string> find_intersection(vector<string>* name_1, const vector<string>* name_2){
+    vector<string> inters;
+    //vector<string> inters = new vector<string>;
     vector<string> temp = *name_2;
     sort(name_1->begin(), name_1->end());
     sort(temp.begin(), temp.end());
@@ -71,7 +105,7 @@ vector<string>* find_intersection(vector<string>* name_1, const vector<string>* 
     
     do{
         if(name_1->at(i) == temp.at(j)) {
-            inters->push_back(name_1->at(i));
+            inters.push_back(name_1->at(i));
             i++;
             j++;
         }
@@ -85,7 +119,7 @@ vector<string>* find_intersection(vector<string>* name_1, const vector<string>* 
     
     return inters;
 }
-
+*/
 
 class MCaviarModel{
 public:
@@ -110,6 +144,9 @@ public:
     int num_of_studies;
     vector<double> S_LONG_VEC;
     
+    /*
+     consrtuctor for MCaviarModel
+     */
     MCaviarModel(vector<string> ldDir, vector<string> zDir, string outputFileName, int totalCausalSNP, double NCP, double rho, bool histFlag, double gamma=0.01, double tau_sqr = 0.2, double sigma_g_squared = 5.2) {
         this->histFlag = histFlag;
         this->NCP = NCP;
@@ -139,6 +176,7 @@ public:
             importDataFirstColumn(z_file, temp_names);
             importDataSecondColumn(z_file, temp_z);
             
+            //FIX THE SIZE! IN CASE THE INPUT IS NOT 50*50
             mat temp_sig;
             temp_sig = mat(50,50);
             for (int i = 0; i <50; i++){
@@ -150,13 +188,16 @@ public:
             sigma->push_back(temp_sig);
             snpNames->push_back(temp_names);
             z_score->push_back(temp_z);
+            
+            delete temp_LD;
         }
         
+        //find the intersection between the names in case they are different length
+        /*
         vector<string> intersect = (*snpNames)[0];
         for(int i = 1 ; i < snpNames->size(); i++){
-            intersect = (*find_intersection(&intersect, &((*snpNames)[i])));
+            intersect = find_intersection(&intersect, &((*snpNames)[i]));
         }
-        
         for(int i = 0; i < snpNames->size(); i++){
             int j = (*snpNames)[i].size() - 1;
             do {
@@ -168,30 +209,32 @@ public:
                 }
                 j--;
             } while(j <= 0);
-        }
-        
+        }*/
+      
         num_of_studies = snpNames->size();
         snpCount = (*snpNames)[0].size();
         pcausalSet = new vector<char>(snpCount);
         rank = new vector<int>(snpCount, 0);
         
-        for(int i = 0; i < num_of_studies; i++){
-            vector<string> temp_names;
-            temp_names = snpNames->at(i);
-            sort(temp_names.begin(), temp_names.end());
-            
-            vector<int> index;
-            int j = 0;
-            while(j < temp_names.size()) {
-                for(int k = 0; k < (*snpNames)[i].size(); k++){
-                    if((temp_names)[j] == (*snpNames)[i][k]){
-                        index.push_back(k);
-                        j++;
-                    }
-                }
-            }
-            Msort(index, (*snpNames)[i], (*z_score)[i], (*sigma)[i]);
-        }
+        //sort the snpNames so they are the same index in the matrix and z_score vector
+        /*
+         for(int i = 0; i < num_of_studies; i++){
+         vector<string> temp_names;
+         temp_names = snpNames->at(i);
+         sort(temp_names.begin(), temp_names.end());
+         
+         vector<int> index;
+         int j = 0;
+         while(j < temp_names.size()) {
+         for(int k = 0; k < (*snpNames)[i].size(); k++){
+         if((temp_names)[j] == (*snpNames)[i][k]){
+         index.push_back(k);
+         j++;
+         }
+         }
+         }
+         //Msort(index, (*snpNames)[i], (*z_score)[i], (*sigma)[i]);
+         }*/
         
         for (int i = 0; i < z_score->size(); i++){
             for(int j = 0; j < (*z_score)[i].size(); j++){
@@ -222,10 +265,20 @@ public:
         post = new MPostCal(BIG_SIGMA, &S_LONG_VEC, snpCount, totalCausalSNP, snpNames, gamma, tau_sqr, sigma_g_squared, num_of_studies);
     }
     
+    /*
+     run the greedy algorithm
+     @param no param
+     @return no return
+     */
     void run() {
         post->findOptimalSetGreedy(&S_LONG_VEC, NCP, pcausalSet, rank, rho, outputFileName);
     }
     
+    /*
+     finish by by printing the set, post and hist file
+     @param no param
+     @return no return
+     */
     void finishUp() {
         ofstream outputFile;
         string outFileNameSet = string(outputFileName)+"_set.txt";
@@ -239,20 +292,15 @@ public:
         if(histFlag)
             post->printHist2File(string(outputFileName)+"_hist.txt");
     }
-    
-    void printLogData() {
-        //print likelihood
-        //print all possible configuration from the p-causal set
-        post->computeALLCausalSetConfiguration(&S_LONG_VEC, NCP, pcausalSet,outputFileName+"._log.txt");
-    }
-    
+
     ~MCaviarModel() {
         delete z_score;
+        delete sigma;
+        delete snpNames;
         delete pcausalSet;
         delete rank;
-        delete sigma;
-        delete post;
     }
 };
 
 #endif
+

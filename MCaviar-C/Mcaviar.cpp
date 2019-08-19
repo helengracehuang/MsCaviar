@@ -5,7 +5,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
 #include <iostream>
 #include <sstream>
@@ -20,20 +19,25 @@
 
 using namespace std;
 
+/*
+ Reads the content of the file, return a vector of paths
+ @param fileName the name of file that contains all the paths to z or ld files
+ @return vector of paths
+ */
 vector<string> read_dir(string fileName){
     vector<string> dirs;
     string data;
     
-    ifstream fin;
-    fin.open(fileName);
+    ifstream fin(fileName.c_str(), std::ifstream::in);
     if (!fin) {
-        cout << "Unable to open file";
+        cout << "Unable to open file; WHY!?!";
         exit(1); // terminate with error
     }
     
-    while(!fin.eof()){
+    while(fin.good()){
         getline(fin,data);
-        dirs.push_back(data); }
+        if(data != "") {
+            dirs.push_back(data); }}
     fin.close();
     return dirs;
 }
@@ -54,7 +58,7 @@ int main( int argc, char *argv[]  ){
     string outputFileName = "";
     string geneMapFile = "";
     
-    while ((oc = getopt(argc, argv, "vhl:o:z:g:r:c:f:")) != -1) {
+    while ((oc = getopt(argc, argv, "vhl:o:z:r:c:g:f:t:")) != -1) {
         switch (oc) {
             case 'v':
                 cout << "version 2.2:" << endl;
@@ -62,8 +66,8 @@ int main( int argc, char *argv[]  ){
                 cout << "Options: " << endl;
                 cout << "-h, --help                 show this help message and exit " << endl;
                 cout << "-o OUTFILE, --out=OUTFILE  specify the output file" << endl;
-                cout << "-l LDFile, --ld_file=LDFILE    the ld input files folder directory" << endl;
-                cout << "-z ZFile, --z_file=ZFILE   the z-score and rsID files folder directory" << endl;
+                cout << "-l LDFile, --ld_file=LDFILE    the ld input file that contains paths to ld files" << endl;
+                cout << "-z ZFile, --z_file=ZFILE   the z-score and rsID file that contains paths to z files" << endl;
                 cout << "-r RHO, --rho-prob=RHO     set $pho$ probability (default 0.95)" << endl;
                 cout << "-g GAMMA, --gamma      set $gamma$ the prior of a SNP being causal (default 0.01)" << endl;
                 cout << "-c causal          set the maximum number of causal SNPs" << endl;
@@ -81,6 +85,7 @@ int main( int argc, char *argv[]  ){
             case 'z':
                 zFile = string(optarg);
                 break;
+                
             case 'r':
                 rho = atof(optarg);
                 break;
@@ -105,8 +110,8 @@ int main( int argc, char *argv[]  ){
                 break;
         }
     }
+ 
     
-    //program is running
     cout << "@-------------------------------------------------------------@" << endl;
     cout << "| M-CAVIAR!                |                30/Jul/2019       | " << endl;
     cout << "|-------------------------------------------------------------|" << endl;
@@ -116,13 +121,12 @@ int main( int argc, char *argv[]  ){
     cout << "|         http://genetics.cs.ucla.edu/caviar/                 |" << endl;
     cout << "@-------------------------------------------------------------@" << endl;
     
-    
     vector<string> ldDir;
     ldDir = read_dir(ldFile);
-
+    
     vector<string> zDir;
     zDir = read_dir(zFile);
-    
+
     if(ldDir.size() != zDir.size()) {
         cout << "Error, LD files and Z files do not match in number" << endl;
         return 0;
@@ -133,3 +137,4 @@ int main( int argc, char *argv[]  ){
     Mcaviar.finishUp();
     return 0;
 }
+

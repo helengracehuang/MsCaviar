@@ -6,35 +6,12 @@
 #include <iomanip>
 #include <vector>
 #include <math.h>
-
 #include "MUtil.h"
 #include "MPostCal.h"
 
 using namespace arma;
 
-
-void printGSLPrint(mat &A, int row, int col) {
-    for(int i = 0; i < row; i++) {
-        for(int j = 0; j < col; j++)
-            printf("%g ", A(i, j));
-        printf("\n");
-    }
-}
-
-string MPostCal::convertConfig2String(int * config, int size) {
-    string result = "0";
-    for(int i = 0; i < size; i++)
-        if(config[i]==1)
-            result+= "_" + convertInt(i);
-    return result;
-}
-
 mat MPostCal::construct_diagC(vector<int> configure) {
-    /*
-     construct sigma_C by the kronecker product in paper, it is mn by mn. the variance for vec(lambdaC)|vec(C)
-     :param configure the causal status vector of 0 and 1
-     :return diagC is the variance matrix for (lamdaC|C)
-     */
     mat Identity_M = mat(num_of_studies, num_of_studies, fill::eye);
     mat Matrix_of_1 = mat(num_of_studies, num_of_studies);
     Matrix_of_1.fill(1);
@@ -49,13 +26,6 @@ mat MPostCal::construct_diagC(vector<int> configure) {
 }
 
 double MPostCal::likelihood(vector<int> configure, vector<double> * stat, double NCP) {
-    /*
-     compute likelihood of each configuration by Woodbury
-     :param configure the causal status vector of 0 and 1
-     :param stat the z-score of each snp
-     :param NCP the non-centrality param, set to higher of 5.2 or the highest z_score of all snps in all studies
-     :return likelihood of the configuration
-     */
     int causalCount = 0;
     double matDet = 0;
     double res    = 0;
@@ -101,7 +71,7 @@ double MPostCal::likelihood(vector<int> configure, vector<double> * stat, double
     // UV = SigmaC * Sigma (kn by kn)
     mat UV(causalCount * num_of_studies, causalCount * num_of_studies, fill::zeros);
     UV = U * V;
-
+    
     mat I_AA   = mat(snpCount, snpCount, fill::eye);
     mat tmp_CC = mat(causalCount * num_of_studies, causalCount * num_of_studies, fill::eye) + UV;
     matDet = det(tmp_CC) * sigmaDet;
@@ -113,7 +83,7 @@ double MPostCal::likelihood(vector<int> configure, vector<double> * stat, double
     mat tmpResultMatrix1N = statMatrixtTran * tmp_AA;
     mat tmpResultMatrix11 = tmpResultMatrix1N * statMatrix;
     res = tmpResultMatrix11(0,0);
-
+    
     if(matDet==0) {
         cout << "Error the matrix is singular and we fail to fix it." << endl;
         exit(0);
@@ -232,23 +202,13 @@ double MPostCal::computeTotalLikelihood(vector<double>* stat, double NCP) {
     return(sumLikelihood);
 }
 
-/*
- stat is the z-scpres
- sigma is the correaltion matrix
- G is the map between snp and the gene (snp, gene)
- */
+
 double MPostCal::findOptimalSetGreedy(vector<double> * stat, double NCP, vector<char> * pcausalSet, vector<int> * rank,  double inputRho, string outputFileName) {
     int index = 0;
     double rho = double(0);
     double total_post = double(0);
     
     totalLikeLihoodLOG = computeTotalLikelihood(stat, NCP);
-    
-    /*
-    cout << totalLikeLihoodLOG << "\n" << "posValues are ";
-    for(int i = 0; i < 50; i++) {
-        cout << postValues[i] << "   ";
-    }*/
     
     export2File(outputFileName+"_log.txt", exp(totalLikeLihoodLOG)); //Output the total likelihood to the log File
     for(int i = 0; i < snpCount; i++)
@@ -279,3 +239,4 @@ double MPostCal::findOptimalSetGreedy(vector<double> * stat, double NCP, vector<
     printf("\n");
     return(0);
 }
+

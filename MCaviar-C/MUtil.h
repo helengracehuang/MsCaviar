@@ -28,41 +28,67 @@ struct by_number {
 };
 
 
-
+/*
+ convert int to string
+ */
 string convertInt(int number);
+
+/*
+ find n factorial
+*/
 long int fact(int n) ;
-void copyConfigure(double *dest, double *src, int size) ;
+
+/*
+ find minimum between a and b
+ */
 double min(double a, double b) ;
+
+/*
+ find combinration n choose r
+ */
 long int nCr(int n, int r) ;
-void printVector(char * data, int size) ;
-void printVector(int * data, int size) ;
-void printVector(double * data, int size) ;
-void diffVector(double * data1, double * data2, int size, double * result) ;
-void sumVector(double * data1, double * data2, int size, double * result) ;
-double multVector(double * data1, double * data2, int size) ;
-void dotVector(double * data1, double * data2, int size, double * result) ;
-void multVectorMatrix(double *vector, double * matrix, int size, double * result) ;
-void fileSize(string fileName, int & size);
+
+/*
+ import data from file
+ */
 void importData(string fileName, vector<double> *& vector);
-void importData(string fileName, vector<int> *& vector);
+
+/*
+ import second column of data from file
+ */
 void importDataSecondColumn(string fileName, vector<double>& vector);
-void importDataNthColumn(string fileName, vector<double>& vector, int colNum, int ignore=0);
+
+/*
+ import first column of data from file
+ */
 void importDataFirstColumn(string fileName, vector<string>& list, int ignore=0);
-void rmvnorm(double * mean, double * sigma, int size, double * results);
-void resetVector(char *data, int size);
-void resetVector(int *data, int size);
-void resetVector(double *data, int size);
-void generateMean(int * causalSNP, double * sigma, int snpCount, double * result);
+
+/*
+ export data type char from file
+ */
 void exportVector2File(string fileName, char * data, int size);
-void exportVector2File(string fileName, vector<int> data, int size);
+
+/*
+ export data type double from file
+ */
 void exportVector2File(string fileName, double * data, int size);
+
+/*
+ export data type int from file
+ */
 void export2File(string fileName, int data);
+
+/*
+ export data type double from file
+ */
 void export2File(string fileName, double data);
-void matrixMul(int * aData, int * bData, int * cData, int row1, int col1, int row2, int col2);
-int snp2Gene(int * G, int snpId, int snpCount, int geneCount);
-void setIdentitymatrix(int * G, int snpCount, int geneCount);
+
+/*
+ make a matrix semi-positive definite, ie. full rank
+ */
 void makeSigmaPositiveSemiDefinite(mat * sigma, int size);
 
 
 #endif
+
 

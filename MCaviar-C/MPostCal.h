@@ -4,13 +4,11 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include <vector>
-#include <random>
 
 #include <armadillo>
 
@@ -20,7 +18,6 @@ using namespace arma;
 void printGSLPrint(mat A, int row, int col);
 
 class MPostCal{
-    
 private:
     
     double gamma;        // the probability of SNP being causal
@@ -41,6 +38,7 @@ private:
     mat statMatrixtTran;
     vector<vector<string> > * SNP_NAME;
     
+    //addition in log space
     double addlogSpace(double a, double b) {
         if (a == 0)
             return b;
@@ -53,7 +51,9 @@ private:
     }
     
 public:
-    
+    /*
+     constructor
+    */
     MPostCal(mat * BIG_SIGMA, vector<double> * S_LONG_VEC, int snpCount, int MAX_causal, vector<vector<string> > * SNP_NAME, double gamma, double t_squared, double s_squared, int num_of_studies) {
         this->gamma = gamma;
         this->SNP_NAME = SNP_NAME;
@@ -80,8 +80,8 @@ public:
         }
         // sigmaMatrix now an array of sigma matrices for each study i, same for invSigmaMatrix, sigmaDet
         sigmaMatrix = mat (snpCount * num_of_studies, snpCount * num_of_studies);
-        std::default_random_engine generator;
-        std::normal_distribution<double> distribution(0, 1);
+        //std::default_random_engine generator;
+        //std::normal_distribution<double> distribution(0, 1);
         for(int i = 0; i < snpCount * num_of_studies; i++) {
             for (int j = 0; j < snpCount * num_of_studies; j++) {
                 //sigmaMatrix(i,j) = (*BIG_SIGMA)(i,j) + distribution(generator) * 0.005; // add epsilon to SIGMA
@@ -96,20 +96,51 @@ public:
     ~MPostCal() {
         delete [] histValues;
         delete [] postValues;
-        delete SNP_NAME;
     }
-    
-    void computeALLCausalSetConfiguration(vector<double> * stat, double NCP, vector<char> * pcausalSet, string outputFileName);
+
+    /*
+     construct sigma_C by the kronecker product in paper, it is mn by mn. the variance for vec(lambdaC)|vec(C)
+     :param configure the causal status vector of 0 and 1
+     :return diagC is the variance matrix for (lamdaC|C)
+     */
     mat construct_diagC(vector<int> configure);
+    
+    /*
+     compute likelihood of each configuration by Woodbury
+     :param configure the causal status vector of 0 and 1
+     :param stat the z-score of each snp
+     :param NCP the non-centrality param, set to higher of 5.2 or the highest z_score of all snps in all studies
+     :return likelihood of the configuration
+     */
     double likelihood(vector<int> configure, vector<double> * stat, double NCP) ;
+    
+    /*
+     find the next binary configuration based on the previous config and size of vector
+     */
     int nextBinary(vector<int>& data, int size) ;
+    
+    /*
+     find the total likelihood given the z_score and NCP
+     */
     double computeTotalLikelihood(vector<double> * stat, double NCP) ;
+    
+    /*
+     greedy algorithm to find minimal set
+     @param stat is the z-scpres
+     @param sigma is the correaltion matrix
+     */
     double findOptimalSetGreedy(vector<double> * stat, double NCP, vector<char> * pcausalSet, vector<int> *rank,  double inputRho, string outputFileName);
-    string convertConfig2String(int * config, int size);
+    
+    /*
+     print the hist file, which is the likelihood of the set containing 0, 1, 2... up to the number of max snps
+     */
     void printHist2File(string fileName) {
         exportVector2File(fileName, histValues, maxCausalSNP+1);
     }
     
+    /*
+     print to the .post file
+     */
     void printPost2File(string fileName) {
         double total_post = 0;
         ofstream outfile(fileName.c_str(), ios::out );
@@ -124,3 +155,4 @@ public:
 };
 
 #endif
+
