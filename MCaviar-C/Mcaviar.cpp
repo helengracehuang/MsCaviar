@@ -121,6 +121,9 @@ int main( int argc, char *argv[]  ){
     cout << "|         http://genetics.cs.ucla.edu/caviar/                 |" << endl;
     cout << "@-------------------------------------------------------------@" << endl;
     
+    /*
+    ldFile = "ld.txt";
+    zFile = "z.txt";
     vector<string> ldDir;
     ldDir = read_dir(ldFile);
     
@@ -131,6 +134,14 @@ int main( int argc, char *argv[]  ){
         cout << "Error, LD files and Z files do not match in number" << endl;
         return 0;
     }
+    */
+    
+    vector<string> ldDir;
+    string str = "50_LD.txt";
+    ldDir.push_back(str);
+    vector<string> zDir;
+    string temp = "50_Z.txt";
+    zDir.push_back(temp);
     
     MCaviarModel Mcaviar(ldDir, zDir, outputFileName, totalCausalSNP, NCP, rho, histFlag, gamma, tau_sqr, sigma_g_squared);
     Mcaviar.run();
