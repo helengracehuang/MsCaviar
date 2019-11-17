@@ -113,7 +113,7 @@ public:
             makeSigmaPositiveSemiDefinite(&(sigma->at(i)), snpCount);
         }
         
-        mat* BIG_SIGMA = new mat(snpCount * num_of_studies, snpCount * num_of_studies);
+        mat* BIG_SIGMA = new mat(snpCount * num_of_studies, snpCount * num_of_studies, fill::zeros);
         for (int i = 0 ; i < num_of_studies; i++){
             mat temp_sigma = mat(num_of_studies , num_of_studies, fill::zeros);
             temp_sigma(i,i) = 1;
